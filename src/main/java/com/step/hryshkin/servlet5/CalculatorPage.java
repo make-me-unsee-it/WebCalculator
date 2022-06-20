@@ -6,15 +6,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 
 @WebServlet(urlPatterns = {"/calculator"})
 public class CalculatorPage extends HttpServlet {
-    public static StringBuilder topField = new StringBuilder("");
-    public static double topFieldDouble = 0;
-    public static StringBuilder bottomField = new StringBuilder(" 0");
-    public static double bottomFieldDouble = 0;
     public static boolean calculatorFirstLaunched = true;
+    //
+    public static StringBuilder topField = new StringBuilder("");
+    public static StringBuilder bottomField = new StringBuilder(" 0");
+    //
+    public static BigDecimal firstNumber = BigDecimal.valueOf(0);
+    public static BigDecimal secondNumber = BigDecimal.valueOf(0);
+    //
     public static boolean digitInputOnGoing = true;
+    public static char currentOperation = 'n';
     public static boolean digitInputOnGoingAfterDot = false;
     public static boolean bottomFiledDigitIsNegative = false;
 
@@ -25,162 +30,228 @@ public class CalculatorPage extends HttpServlet {
 
         //распознать, какая кнопка нажата
         char lastPressedButton = '0';
-        if (!calculatorFirstLaunched){
+        if (!calculatorFirstLaunched) {
             String input = req.getParameter("answer");
             if (input != null) lastPressedButton = inputRecognition(req.getParameter("answer"));
             else {
                 calculatorFirstLaunched = false;
                 bottomField = new StringBuilder(" 0");
-                bottomFieldDouble = 0;
+                firstNumber = BigDecimal.valueOf(0);
                 topField = new StringBuilder("");
-                topFieldDouble = 0;
+                firstNumber = BigDecimal.valueOf(0);
                 digitInputOnGoingAfterDot = false;
                 digitInputOnGoing = true;
                 bottomFiledDigitIsNegative = false;
+                currentOperation = 'n';
             }
         }
 
-            if (!calculatorFirstLaunched) {         // ВСЯ ЛОГИКА В ЭТОМ БЛОКЕ/////////////////////////
-                if (lastPressedButton == '1') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("1");
-                    digitInputOnGoing = true;
+        if (!calculatorFirstLaunched) {         // ВСЯ ЛОГИКА В ЭТОМ БЛОКЕ/////////////////////////
+            if (lastPressedButton == '1') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
+                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("1");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '2') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("2");
-                    digitInputOnGoing = true;
+            } else if (lastPressedButton == '2') {
+                if (!digitInputOnGoing) {
+                    bottomField = new StringBuilder(" ");
+                } else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("2");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '3') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("3");
-                    digitInputOnGoing = true;
+            } else if (lastPressedButton == '3') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
+                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("3");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '4') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("4");
-                    digitInputOnGoing = true;
+            } else if (lastPressedButton == '4') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
+                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("4");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '5') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("5");
-                    digitInputOnGoing = true;
+            } else if (lastPressedButton == '5') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
+                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("5");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '6') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("6");
-                    digitInputOnGoing = true;
+            } else if (lastPressedButton == '6') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
+                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("6");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '7') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("7");
-                    digitInputOnGoing = true;
+            } else if (lastPressedButton == '7') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
+                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("7");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '8') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("8");
-                    digitInputOnGoing = true;
+            } else if (lastPressedButton == '8') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
+                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("8");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '9') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                    if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                        bottomField = new StringBuilder(" ");
-                    bottomField.append("9");
-                    digitInputOnGoing = true;
+            } else if (lastPressedButton == '9') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
+                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
+                    bottomField = new StringBuilder(" ");
+                bottomField.append("9");
+                digitInputOnGoing = true;
 
-                } else if (lastPressedButton == '0') {
-                    if (!digitInputOnGoing) bottomField = new StringBuilder(" 0");
-                    else {
-                        if ((bottomField.length() != 2) & (bottomField.charAt(1) != '0')) {
-                            bottomField.append("0");
-                            digitInputOnGoing = true;
-                        }
-                    }
-
-                } else if (lastPressedButton == '.') {
-                    if (!digitInputOnGoingAfterDot) {
-                        bottomField.append(".");
+            } else if (lastPressedButton == '0') {
+                if (!digitInputOnGoing) bottomField = new StringBuilder(" 0");
+                else {
+                    if ((bottomField.length() == 2) & (bottomField.charAt(1) == '0')) {
                         digitInputOnGoing = true;
-                        digitInputOnGoingAfterDot = true;
+                    } else if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
+                        bottomField.append("0");
+                        digitInputOnGoing = true;
+                    } else if (bottomField.length() > 2) {
+                        bottomField.append("0");
+                        digitInputOnGoing = true;
                     }
+                }
 
-                } else if (lastPressedButton == 'b') {
-                    if (digitInputOnGoing) {
-                        int currentBottomFieldLength = bottomField.length();
-                        if (currentBottomFieldLength == 2) {
-                            bottomField = new StringBuilder(" 0");
-                            bottomFiledDigitIsNegative = false;
-                            digitInputOnGoingAfterDot = false;
-                        } else if ((currentBottomFieldLength == 4) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
-                            bottomField = new StringBuilder(" 0");
-                            bottomFiledDigitIsNegative = false;
-                            digitInputOnGoingAfterDot = false;
-                        } else if ((currentBottomFieldLength == 3) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
-                            bottomField = new StringBuilder(" 0");
-                            bottomFiledDigitIsNegative = false;
-                            digitInputOnGoingAfterDot = false;
-                        } else if (bottomField.charAt(currentBottomFieldLength - 1) == '.') {
-                            bottomField.setLength(currentBottomFieldLength - 1);
-                            digitInputOnGoingAfterDot = false;
-                        } else bottomField.setLength(currentBottomFieldLength - 1);
-                    }
-
-                } else if (lastPressedButton == 'e') {
-                    bottomField = new StringBuilder(" 0");
-                    bottomFieldDouble = 0;
-                    digitInputOnGoingAfterDot = false;
+            } else if (lastPressedButton == '.') {
+                if (!digitInputOnGoingAfterDot) {
+                    bottomField.append(".");
                     digitInputOnGoing = true;
-                    bottomFiledDigitIsNegative = false;
+                    digitInputOnGoingAfterDot = true;
+                }
 
-                } else if (lastPressedButton == 'c') {
-                    bottomField = new StringBuilder(" 0");
-                    bottomFieldDouble = 0;
-                    topField = new StringBuilder("");
-                    topFieldDouble = 0;
-                    digitInputOnGoingAfterDot = false;
-                    digitInputOnGoing = true;
-                    bottomFiledDigitIsNegative = false;
+            } else if (lastPressedButton == 'b') {
+                if (digitInputOnGoing) {
+                    int currentBottomFieldLength = bottomField.length();
+                    if (currentBottomFieldLength == 2) {
+                        bottomField = new StringBuilder(" 0");
+                        bottomFiledDigitIsNegative = false;
+                        digitInputOnGoingAfterDot = false;
+                    } else if ((currentBottomFieldLength == 4) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
+                        bottomField = new StringBuilder(" 0");
+                        bottomFiledDigitIsNegative = false;
+                        digitInputOnGoingAfterDot = false;
+                    } else if ((currentBottomFieldLength == 3) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
+                        bottomField = new StringBuilder(" 0");
+                        bottomFiledDigitIsNegative = false;
+                        digitInputOnGoingAfterDot = false;
+                    } else if (bottomField.charAt(currentBottomFieldLength - 1) == '.') {
+                        bottomField.setLength(currentBottomFieldLength - 1);
+                        digitInputOnGoingAfterDot = false;
+                    } else bottomField.setLength(currentBottomFieldLength - 1);
+                }
 
-                } else if (lastPressedButton == '&') {
-                    if (digitInputOnGoing) {
-                        if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
-                            if (!bottomFiledDigitIsNegative) {
-                                bottomField.setCharAt(0, '-');
-                                bottomFiledDigitIsNegative = true;
-                            } else {
-                                bottomField.setCharAt(0, ' ');
-                                bottomFiledDigitIsNegative = false;
-                            }
-                        } else if (bottomField.length() >= 3) {
-                            if (!bottomFiledDigitIsNegative) {
-                                bottomField.setCharAt(0, '-');
-                                bottomFiledDigitIsNegative = true;
-                            } else {
-                                bottomField.setCharAt(0, ' ');
-                                bottomFiledDigitIsNegative = false;
-                            }
+            } else if (lastPressedButton == 'e') {
+                bottomField = new StringBuilder(" 0");
+                firstNumber = BigDecimal.valueOf(0);
+                digitInputOnGoingAfterDot = false;
+                digitInputOnGoing = true;
+                bottomFiledDigitIsNegative = false;
+
+            } else if (lastPressedButton == 'c') {
+                bottomField = new StringBuilder(" 0");
+                firstNumber = BigDecimal.valueOf(0);
+                topField = new StringBuilder("");
+                firstNumber = BigDecimal.valueOf(0);
+                digitInputOnGoingAfterDot = false;
+                digitInputOnGoing = true;
+                bottomFiledDigitIsNegative = false;
+                currentOperation = 'n';
+
+            } else if (lastPressedButton == '&') {
+                if (digitInputOnGoing) {
+                    if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
+                        if (!bottomFiledDigitIsNegative) {
+                            bottomField.setCharAt(0, '-');
+                            bottomFiledDigitIsNegative = true;
+                        } else {
+                            bottomField.setCharAt(0, ' ');
+                            bottomFiledDigitIsNegative = false;
+                        }
+                    } else if (bottomField.length() >= 3) {
+                        if (!bottomFiledDigitIsNegative) {
+                            bottomField.setCharAt(0, '-');
+                            bottomFiledDigitIsNegative = true;
+                        } else {
+                            bottomField.setCharAt(0, ' ');
+                            bottomFiledDigitIsNegative = false;
                         }
                     }
                 }
 
+            } else if ((lastPressedButton == '+') | (lastPressedButton == '-')
+                    | (lastPressedButton == '*') | (lastPressedButton == '/')) {
 
-            } // ВСЯ ЛОГИКА В ЭТОМ БЛОКЕ///////////////////////////////////////////////////////////////////////////
+                if (currentOperation == 'n') {
+                    topField.append(cleanInputBeforeOperation(bottomField));
+                    firstNumber = new BigDecimal(String.valueOf(topField));
+                    bottomField = new StringBuilder(topField);
+                    topField.append(lastPressedButton);
+                    secondNumber = firstNumber;
+                }
+                if ((currentOperation != 'n') & (!digitInputOnGoing)) {
+                    System.out.println("сработало");
+                    topField.deleteCharAt(topField.length() - 1);
+                    topField.append(lastPressedButton);
+                    System.out.println("topField: " + topField);
+                    // БАГ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ????????????????????????????????????????????????
+                }
+                if ((currentOperation != 'n') & (digitInputOnGoing)) {
+                    if (lastPressedButton == '+') {
+                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+                        secondNumber = new BigDecimal(String.valueOf(bottomField));
+
+                        firstNumber = firstNumber.add(secondNumber);
+                        secondNumber = firstNumber;
+                        bottomField = new StringBuilder(secondNumber.toString());
+                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                    }
+                    if (lastPressedButton == '-') {
+                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+                        secondNumber = new BigDecimal(String.valueOf(bottomField));
+
+                        firstNumber = firstNumber.subtract(secondNumber);
+                        secondNumber = firstNumber;
+                        bottomField = new StringBuilder(secondNumber.toString());
+                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                    }
+                    if (lastPressedButton == '/') {
+                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+                        secondNumber = new BigDecimal(String.valueOf(bottomField));
+
+                        // ПРОВЕРКА ДЕЛЕНИЯ НА НОЛЬ - ДОБАВИТЬ!!!
+
+                        firstNumber = firstNumber.divide(secondNumber);
+                        secondNumber = firstNumber;
+                        bottomField = new StringBuilder(secondNumber.toString());
+                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                    }
+                    if (lastPressedButton == '*') {
+                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+                        secondNumber = new BigDecimal(String.valueOf(bottomField));
+                        firstNumber = firstNumber.multiply(secondNumber);
+                        secondNumber = firstNumber;
+                        bottomField = new StringBuilder(secondNumber.toString());
+                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                    }
+                }
+                digitInputOnGoing = false;
+                currentOperation = lastPressedButton;
+            }
+
+        } // ВСЯ ЛОГИКА В ЭТОМ БЛОКЕ///////////////////////////////////////////////////////////////////////////
 
         calculatorFirstLaunched = false;
 
@@ -399,31 +470,62 @@ public class CalculatorPage extends HttpServlet {
                 "</html>");
     }
 
-
     public char inputRecognition(String input) {
-        if (input.equals("СЕ")) return 'e';                 //clear entry
-        else if (input.equals("С")) return 'c';             //clear all
-        else if (input.equals("⌫")) return 'b';            //backspace
-        else if (input.equals("√х")) return 'r';            //square root
-        else if (input.equals("%")) return '%';             //percentage
-        else if (input.equals("x²")) return 's';            //square
-        else if (input.equals("÷")) return '/';             //division
-        else if (input.equals("7")) return '7';             //7
-        else if (input.equals("8")) return '8';             //8
-        else if (input.equals("9")) return '9';             //9
-        else if (input.equals("×")) return '*';             //multiplication
-        else if (input.equals("4")) return '4';             //4
-        else if (input.equals("5")) return '5';             //5
-        else if (input.equals("6")) return '6';             //6
-        else if (input.equals("-")) return '-';             //minus
-        else if (input.equals("1")) return '1';             //1
-        else if (input.equals("2")) return '2';             //2
-        else if (input.equals("3")) return '3';             //3
-        else if (input.equals("+")) return '+';             //plus
-        else if (input.equals("±")) return '&';             //sign change
-        else if (input.equals("0")) return '0';             //0
-        else if (input.equals(",")) return '.';             //dot
-        else return '=';                                    //result
+        switch (input) {
+            case "СЕ":
+                return 'e';            //clear entry
+            case "С":
+                return 'c';             //clear all
+            case "⌫":
+                return 'b';            //backspace
+            case "√х":
+                return 'r';            //square root
+            case "%":
+                return '%';             //percentage
+            case "x²":
+                return 's';            //square
+            case "÷":
+                return '/';             //division
+            case "7":
+                return '7';             //7
+            case "8":
+                return '8';             //8
+            case "9":
+                return '9';             //9
+            case "×":
+                return '*';             //multiplication
+            case "4":
+                return '4';             //4
+            case "5":
+                return '5';             //5
+            case "6":
+                return '6';             //6
+            case "-":
+                return '-';             //minus
+            case "1":
+                return '1';             //1
+            case "2":
+                return '2';             //2
+            case "3":
+                return '3';             //3
+            case "+":
+                return '+';             //plus
+            case "±":
+                return '&';             //sign change
+            case "0":
+                return '0';             //0
+            case ",":
+                return '.';             //dot
+            default:
+                return '=';              //result
+        }
+    }
+
+    public String cleanInputBeforeOperation(StringBuilder input) {
+        if (input.charAt(0) == ' ') input.deleteCharAt(0);
+        if (input.charAt(input.length() - 1) == '.') input.deleteCharAt(input.length() - 1);
+        if (((input.charAt(0) == '-') & (input.length() == 2)) && (input.charAt(1) == '0')) input.deleteCharAt(0);
+        return input.toString();
     }
 }
 
