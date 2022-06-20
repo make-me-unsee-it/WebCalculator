@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @WebServlet(urlPatterns = {"/calculator"})
 public class CalculatorPage extends HttpServlet {
@@ -22,6 +23,7 @@ public class CalculatorPage extends HttpServlet {
     public static char currentOperation = 'n';
     public static boolean digitInputOnGoingAfterDot = false;
     public static boolean bottomFiledDigitIsNegative = false;
+    public static boolean errorStatus = false;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -34,7 +36,7 @@ public class CalculatorPage extends HttpServlet {
             String input = req.getParameter("answer");
             if (input != null) lastPressedButton = inputRecognition(req.getParameter("answer"));
             else {
-                calculatorFirstLaunched = false;
+                calculatorFirstLaunched = true;  // ПОМЕНЯЛ НА ТРУ - 20.06.2022 14-43 !!!!!!!!!!!!!!!!!!!!!!!!!!
                 bottomField = new StringBuilder(" 0");
                 firstNumber = BigDecimal.valueOf(0);
                 topField = new StringBuilder("");
@@ -43,6 +45,22 @@ public class CalculatorPage extends HttpServlet {
                 digitInputOnGoing = true;
                 bottomFiledDigitIsNegative = false;
                 currentOperation = 'n';
+            }
+        }
+
+        if (errorStatus) {
+            if (lastPressedButton == 'c') {
+                bottomField = new StringBuilder(" 0");
+                firstNumber = BigDecimal.valueOf(0);
+                topField = new StringBuilder("");
+                firstNumber = BigDecimal.valueOf(0);
+                digitInputOnGoingAfterDot = false;
+                digitInputOnGoing = true;
+                bottomFiledDigitIsNegative = false;
+                currentOperation = 'n';
+                errorStatus = false;
+            } else {
+                calculatorFirstLaunched = true;
             }
         }
 
@@ -112,8 +130,10 @@ public class CalculatorPage extends HttpServlet {
                 digitInputOnGoing = true;
 
             } else if (lastPressedButton == '0') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" 0");
-                else {
+                if (!digitInputOnGoing) {
+                    bottomField = new StringBuilder(" 0");
+                    digitInputOnGoing = true;
+                } else {
                     if ((bottomField.length() == 2) & (bottomField.charAt(1) == '0')) {
                         digitInputOnGoing = true;
                     } else if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
@@ -202,14 +222,11 @@ public class CalculatorPage extends HttpServlet {
                     secondNumber = firstNumber;
                 }
                 if ((currentOperation != 'n') & (!digitInputOnGoing)) {
-                    System.out.println("сработало");
                     topField.deleteCharAt(topField.length() - 1);
                     topField.append(lastPressedButton);
-                    System.out.println("topField: " + topField);
-                    // БАГ!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ????????????????????????????????????????????????
                 }
                 if ((currentOperation != 'n') & (digitInputOnGoing)) {
-                    if (lastPressedButton == '+') {
+                    if (currentOperation == '+') {
                         bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
                         secondNumber = new BigDecimal(String.valueOf(bottomField));
 
@@ -218,7 +235,7 @@ public class CalculatorPage extends HttpServlet {
                         bottomField = new StringBuilder(secondNumber.toString());
                         topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
                     }
-                    if (lastPressedButton == '-') {
+                    if (currentOperation == '-') {
                         bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
                         secondNumber = new BigDecimal(String.valueOf(bottomField));
 
@@ -227,18 +244,29 @@ public class CalculatorPage extends HttpServlet {
                         bottomField = new StringBuilder(secondNumber.toString());
                         topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
                     }
-                    if (lastPressedButton == '/') {
+                    if (currentOperation == '/') {
+                        System.out.println("где я?");
                         bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
                         secondNumber = new BigDecimal(String.valueOf(bottomField));
 
-                        // ПРОВЕРКА ДЕЛЕНИЯ НА НОЛЬ - ДОБАВИТЬ!!!
+                        if (secondNumber.compareTo(new BigDecimal(0)) != 0) {
+                            System.out.println("проверка деления на ноль пройдена");
+                            firstNumber = firstNumber.divide(secondNumber, 16, RoundingMode.HALF_UP);
 
-                        firstNumber = firstNumber.divide(secondNumber);
-                        secondNumber = firstNumber;
-                        bottomField = new StringBuilder(secondNumber.toString());
-                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                            // ДОБАВИТЬ STRING.FORMAT ----- например String f = String.format("%.0f", b);
+
+                            secondNumber = firstNumber;
+                            bottomField = new StringBuilder(secondNumber.toString());
+                            topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                        }
+                        if (secondNumber.compareTo(new BigDecimal(0)) == 0) {
+                            topField = new StringBuilder("Деление на ноль невозможно!");
+                            bottomField = new StringBuilder("ОШИБКА");
+                            errorStatus = true;
+                        }
+
                     }
-                    if (lastPressedButton == '*') {
+                    if (currentOperation == '*') {
                         bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
                         secondNumber = new BigDecimal(String.valueOf(bottomField));
                         firstNumber = firstNumber.multiply(secondNumber);
