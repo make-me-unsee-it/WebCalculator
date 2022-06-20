@@ -220,6 +220,7 @@ public class CalculatorPage extends HttpServlet {
                     bottomField = new StringBuilder(topField);
                     topField.append(lastPressedButton);
                     secondNumber = firstNumber;
+                    digitInputOnGoingAfterDot = false; // ДОБАВЛЕНО В 17-13 20.06.2022 - ВРОДЕ БЫ РАБОТАЕТ. НАБЛЮДАТЬ.
                 }
                 if ((currentOperation != 'n') & (!digitInputOnGoing)) {
                     topField.deleteCharAt(topField.length() - 1);
@@ -230,7 +231,7 @@ public class CalculatorPage extends HttpServlet {
                         bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
                         secondNumber = new BigDecimal(String.valueOf(bottomField));
 
-                        firstNumber = firstNumber.add(secondNumber);
+                        firstNumber = firstNumber.add(secondNumber);                // ЗДЕСЬ - УБИРАТЬ ХВОСТ ИЗ НУЛЕЙ ПОСЛЕ ТОЧКИ
                         secondNumber = firstNumber;
                         bottomField = new StringBuilder(secondNumber.toString());
                         topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
@@ -245,15 +246,13 @@ public class CalculatorPage extends HttpServlet {
                         topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
                     }
                     if (currentOperation == '/') {
-                        System.out.println("где я?");
                         bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
                         secondNumber = new BigDecimal(String.valueOf(bottomField));
 
                         if (secondNumber.compareTo(new BigDecimal(0)) != 0) {
-                            System.out.println("проверка деления на ноль пройдена");
-                            firstNumber = firstNumber.divide(secondNumber, 16, RoundingMode.HALF_UP);
-
-                            // ДОБАВИТЬ STRING.FORMAT ----- например String f = String.format("%.0f", b);
+                            firstNumber = firstNumber
+                                    .divide(secondNumber, 16, RoundingMode.HALF_UP)
+                                    .stripTrailingZeros();
 
                             secondNumber = firstNumber;
                             bottomField = new StringBuilder(secondNumber.toString());
@@ -283,219 +282,443 @@ public class CalculatorPage extends HttpServlet {
 
         calculatorFirstLaunched = false;
 
-        resp.getWriter().println("<!DOCTYPE html>\n" +
-                "<html lang=\"en\">\n" +
-                "<head>\n" +
-                "    <meta charset=\"UTF-8\">\n" +
-                "    <title>Калькултор на сервлете</title>\n" +
-                "    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>\n" +
-                "    <style type=\"text/css\">\n" +
-                "\n" +
-                "body { background: gray; }\n" +
-                "\n" +
-                "table.top { background: white; margin-left: auto; margin-right: auto;}\n" +
-                "\n" +
-                "table.bottom { background: #DCDCDC; margin-left: auto; margin-right: auto; }\n" +
-                "\n" +
-                "td.header {\n" +
-                "font-family: Monospace; family-name: Andele Mono; font-size: small;\n" +
-                "background: gray;\n" +
-                "color: white;\n" +
-                "text-align: left;\n" +
-                "}\n" +
-                "\n" +
-                "td.top {\n" +
-                "font-family: Sans-serif; family-name: Helvetica; font-size: small;\n" +
-                "background: white; color: #2F4F4F;\n" +
-                "width: 312px; height: 25px;\n" +
-                "text-align: right;\n" +
-                "}\n" +
-                "\n" +
-                "td.bottom {\n" +
-                "font-family: Sans-serif; family-name: Helvetica; font-size: x-large;\n" +
-                "background: white; color: #2F4F4F;\n" +
-                "width: 312px; height: 40px;\n" +
-                "text-align: right;\n" +
-                "}\n" +
-                "\n" +
-                "td.crutch { background: #DCDCDC; color: #DCDCDC; }\n" +
-                "\n" +
-                "form {width: 75px; height: 30px; }\n" +
-                "\n" +
-                "input.button{\n" +
-                "font-family: Sans-serif; family-name: Helvetica;\n" +
-                "width: 75px; height: 50px;\n" +
-                "}\n" +
-                "\n" +
-                "input.buttonDigit {\n" +
-                "font-family: Sans-serif; family-name: Helvetica; font-weight: bold;\n" +
-                "width: 75px; height: 50px;\n" +
-                "}\n" +
-                "\n" +
-                "input.buttonFunction {\n" +
-                "font-family: Sans-serif; family-name: Helvetica;\n" +
-                "width: 75px; height: 50px;\n" +
-                "}\n" +
-                "\n" +
-                "input.gitHubButton {\n" +
-                "width: 75px; height: 50px;\n" +
-                "color: teal;\n" +
-                "}\n" +
-                "    </style>\n" +
-                "\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "<table class=\"top\">\n" +
-                "    <tr>\n" +
-                "        <td class=\"header\"><i class='fa fa-github' style='color: #f3da35'></i>calc</td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "        <td class=\"top\">" + topField.toString() + "</td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "        <td class=\"bottom\">" + bottomField.toString() + "</td>\n" +
-                "    </tr>\n" +
-                "</table>\n" +
-                "\n" +
-                "<table class=\"bottom\">\n" +
-                "    <tr>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"СЕ\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"С\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#9003;\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"https://github.com/make-me-unsee-it/WebCalculator\" method=\"get\">\n" +
-                "                <p><input class=\"gitHubButton\" type=\"submit\" value=\"GitHub\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "        <td class=\"=usual\">\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#8730;х\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td class=\"=usual\">\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"%\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td class=\"=usual\">\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"x&#178;\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td class=\"=usual\">\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#247;\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"7\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"8\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"9\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#215;\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"4\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"5\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"6\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"-\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"1\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"2\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"3\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"+\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\"&#177;\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"0\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\",\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "        <td>\n" +
-                "            <form action=\"/calculator\" method=\"get\">\n" +
-                "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"=\"></p>\n" +
-                "            </form>\n" +
-                "        </td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "        <td class=\"crutch\">.</td>\n" +
-                "    </tr>\n" +
-                "</table>\n" +
-                "</body>\n" +
-                "</html>");
+        if (!errorStatus) {
+            resp.getWriter().println("<!DOCTYPE html>\n" +
+                    "<html lang=\"en\">\n" +
+                    "<head>\n" +
+                    "    <meta charset=\"UTF-8\">\n" +
+                    "    <title>Калькултор на сервлете</title>\n" +
+                    "    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>\n" +
+                    "    <style type=\"text/css\">\n" +
+                    "\n" +
+                    "body { background: gray; }\n" +
+                    "\n" +
+                    "table.top { background: white; margin-left: auto; margin-right: auto;}\n" +
+                    "\n" +
+                    "table.bottom { background: #DCDCDC; margin-left: auto; margin-right: auto; }\n" +
+                    "\n" +
+                    "td.header {\n" +
+                    "font-family: Monospace; family-name: Andele Mono; font-size: small;\n" +
+                    "background: gray;\n" +
+                    "color: white;\n" +
+                    "text-align: left;\n" +
+                    "}\n" +
+                    "\n" +
+                    "td.top {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica; font-size: small;\n" +
+                    "background: white; color: #2F4F4F;\n" +
+                    "width: 312px; height: 25px;\n" +
+                    "text-align: right;\n" +
+                    "}\n" +
+                    "\n" +
+                    "td.bottom {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica; font-size: x-large;\n" +
+                    "background: white; color: #2F4F4F;\n" +
+                    "width: 312px; height: 40px;\n" +
+                    "text-align: right;\n" +
+                    "}\n" +
+                    "\n" +
+                    "td.crutch { background: #DCDCDC; color: #DCDCDC; }\n" +
+                    "\n" +
+                    "form {width: 75px; height: 30px; }\n" +
+                    "\n" +
+                    "input.button{\n" +
+                    "font-family: Sans-serif; family-name: Helvetica;\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "}\n" +
+                    "\n" +
+                    "input.buttonDigit {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica; font-weight: bold;\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "}\n" +
+                    "\n" +
+                    "input.buttonFunction {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica;\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "}\n" +
+                    "\n" +
+                    "input.gitHubButton {\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "color: teal;\n" +
+                    "}\n" +
+                    "    </style>\n" +
+                    "\n" +
+                    "</head>\n" +
+                    "<body>\n" +
+                    "<table class=\"top\">\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"header\"><i class='fa fa-github' style='color: #f3da35'></i>calc</td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"top\">" + topField.toString() + "</td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"bottom\">" + bottomField.toString() + "</td>\n" +
+                    "    </tr>\n" +
+                    "</table>\n" +
+                    "\n" +
+                    "<table class=\"bottom\">\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"СЕ\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"С\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#9003;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"https://github.com/make-me-unsee-it/WebCalculator\" method=\"get\">\n" +
+                    "                <p><input class=\"gitHubButton\" type=\"submit\" value=\"GitHub\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"=usual\">\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#8730;х\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td class=\"=usual\">\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"%\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td class=\"=usual\">\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"x&#178;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td class=\"=usual\">\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#247;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"7\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"8\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"9\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#215;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"4\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"5\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"6\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"-\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"1\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"2\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"3\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"+\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\"&#177;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"0\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\",\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"=\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"crutch\">.</td>\n" +
+                    "    </tr>\n" +
+                    "</table>\n" +
+                    "</body>\n" +
+                    "</html>");
+        } else {
+            resp.getWriter().println("<!DOCTYPE html>\n" +
+                    "<html lang=\"en\">\n" +
+                    "<head>\n" +
+                    "    <meta charset=\"UTF-8\">\n" +
+                    "    <title>Калькултор на сервлете</title>\n" +
+                    "    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>\n" +
+                    "    <style type=\"text/css\">\n" +
+                    "\n" +
+                    "body { background: gray; }\n" +
+                    "\n" +
+                    "table.top { background: white; margin-left: auto; margin-right: auto;}\n" +
+                    "\n" +
+                    "table.bottom { background: #DCDCDC; margin-left: auto; margin-right: auto; }\n" +
+                    "\n" +
+                    "td.header {\n" +
+                    "font-family: Monospace; family-name: Andele Mono; font-size: small;\n" +
+                    "background: gray;\n" +
+                    "color: white;\n" +
+                    "text-align: left;\n" +
+                    "}\n" +
+                    "\n" +
+                    "td.top {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica; font-size: small;\n" +
+                    "background: white; color: #2F4F4F;\n" +
+                    "width: 312px; height: 25px;\n" +
+                    "text-align: right;\n" +
+                    "}\n" +
+                    "\n" +
+                    "td.bottom {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica; font-size: x-large;\n" +
+                    "background: white; color: #2F4F4F;\n" +
+                    "width: 312px; height: 40px;\n" +
+                    "text-align: right;\n" +
+                    "}\n" +
+                    "\n" +
+                    "td.crutch { background: #DCDCDC; color: #DCDCDC; }\n" +
+                    "\n" +
+                    "form {width: 75px; height: 30px; }\n" +
+                    "\n" +
+                    "input.button{\n" +
+                    "font-family: Sans-serif; family-name: Helvetica;\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "color: #DCDCDC;\n" +
+                    "}\n" +
+                    "\n" +
+                    "input.buttonDigit {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica; font-weight: bold;\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "color: #DCDCDC;\n" +
+                    "}\n" +
+                    "\n" +
+                    "input.buttonFunction {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica;\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "color: #DCDCDC;\n" +
+                    "}\n" +
+                    "\n" +
+                    "input.buttonFunctionSpecial {\n" +
+                    "font-family: Sans-serif; family-name: Helvetica;\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "}\n" +
+                    "\n" +
+                    "input.gitHubButton {\n" +
+                    "width: 75px; height: 50px;\n" +
+                    "color: teal;\n" +
+                    "}\n" +
+                    "    </style>\n" +
+                    "\n" +
+                    "</head>\n" +
+                    "<body>\n" +
+                    "<table class=\"top\">\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"header\"><i class='fa fa-github' style='color: #f3da35'></i>calc</td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"top\">" + topField.toString() + "</td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"bottom\">" + bottomField.toString() + "</td>\n" +
+                    "    </tr>\n" +
+                    "</table>\n" +
+                    "\n" +
+                    "<table class=\"bottom\">\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"СЕ\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunctionSpecial\" type=\"submit\" name=\"answer\" value=\"С\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#9003;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"https://github.com/make-me-unsee-it/WebCalculator\" method=\"get\">\n" +
+                    "                <p><input class=\"gitHubButton\" type=\"submit\" value=\"GitHub\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"=usual\">\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#8730;х\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td class=\"=usual\">\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"%\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td class=\"=usual\">\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"x&#178;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td class=\"=usual\">\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#247;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"7\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"8\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"9\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#215;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"4\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"5\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"6\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"-\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"1\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"2\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"3\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"+\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\"&#177;\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"0\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\",\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "        <td>\n" +
+                    "            <form action=\"/calculator\" method=\"get\">\n" +
+                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"=\"></p>\n" +
+                    "            </form>\n" +
+                    "        </td>\n" +
+                    "    </tr>\n" +
+                    "    <tr>\n" +
+                    "        <td class=\"crutch\">.</td>\n" +
+                    "    </tr>\n" +
+                    "</table>\n" +
+                    "</body>\n" +
+                    "</html>");
+        }
     }
 
     public char inputRecognition(String input) {
@@ -551,6 +774,12 @@ public class CalculatorPage extends HttpServlet {
 
     public String cleanInputBeforeOperation(StringBuilder input) {
         if (input.charAt(0) == ' ') input.deleteCharAt(0);
+        // удаляем хвост из нулей после точки
+        if (digitInputOnGoingAfterDot) {
+            while ((input.length() > 2) && (input.charAt(input.length() - 1) == '0')) {
+                input.setLength(input.length() - 1);
+            }
+        }
         if (input.charAt(input.length() - 1) == '.') input.deleteCharAt(input.length() - 1);
         if (((input.charAt(0) == '-') & (input.length() == 2)) && (input.charAt(1) == '0')) input.deleteCharAt(0);
         return input.toString();
