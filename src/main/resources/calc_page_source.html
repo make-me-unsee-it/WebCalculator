@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Калькултор на сервлете</title>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
+    <style type="text/css">
+
+body { background: gray; }
+
+table.top { background: white; margin-left: auto; margin-right: auto;}
+
+table.bottom { background: #DCDCDC; margin-left: auto; margin-right: auto; }
+
+td.header {
+font-family: Monospace; family-name: Andele Mono; font-size: small;
+background: gray;
+color: white;
+text-align: left;
+}
+
+td.top {
+font-family: Sans-serif; family-name: Helvetica; font-size: small;
+background: white; color: #2F4F4F;
+width: 312px; height: 25px;
+text-align: right;
+}
+
+td.bottom {
+font-family: Sans-serif; family-name: Helvetica; font-size: x-large;
+background: white; color: #2F4F4F;
+width: 312px; height: 40px;
+text-align: right;
+}
+
+td.crutch { background: #DCDCDC; color: #DCDCDC; }
+
+form {width: 75px; height: 30px; }
+
+input.button{
+font-family: Sans-serif; family-name: Helvetica;
+width: 75px; height: 50px;
+}
+
+input.buttonDigit {
+font-family: Sans-serif; family-name: Helvetica; font-weight: bold;
+width: 75px; height: 50px;
+}
+
+input.buttonFunction {
+font-family: Sans-serif; family-name: Helvetica;
+width: 75px; height: 50px;
+}
+
+input.gitHubButton {
+width: 75px; height: 50px;
+color: teal;
+}
+    </style>
+
+</head>
+<body>
+<table class="top">
+    <tr>
+        <td class="header"><i class='fa fa-github' style='color: #f3da35'></i>calc</td>
+    </tr>
+    <tr>
+        <td class="top">%s</td>
+    </tr>
+    <tr>
+        <td class="bottom">%s</td>
+    </tr>
+</table>
+
+<table class="bottom">
+    <tr>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="СЕ"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="С"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#9003;"></p>
+            </form>
+        </td>
+        <td>
+            <form action="https://github.com/make-me-unsee-it/WebCalculator" method="get">
+                <p><input class="gitHubButton" type="submit" value="GitHub"></p>
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td class="=usual">
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#8730;х"></p>
+            </form>
+        </td>
+        <td class="=usual">
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#37;"></p>
+            </form>
+        </td>
+        <td class="=usual">
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="x&#178;"></p>
+            </form>
+        </td>
+        <td class="=usual">
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#247;"></p>
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="7"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="8"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="9"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#215;"></p>
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="4"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="5"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="6"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="-"></p>
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="1"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="2"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="3"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="+"></p>
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="button" type="submit" name="answer" value="&#177;"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="0"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="button" type="submit" name="answer" value=","></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="="></p>
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td class="crutch">.</td>
+    </tr>
+</table>
+</body>
+</html>

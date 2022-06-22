@@ -40,14 +40,22 @@ form {width: 75px; height: 30px; }
 input.button{
 font-family: Sans-serif; family-name: Helvetica;
 width: 75px; height: 50px;
+color: #DCDCDC;
 }
 
 input.buttonDigit {
 font-family: Sans-serif; family-name: Helvetica; font-weight: bold;
 width: 75px; height: 50px;
+color: #DCDCDC;
 }
 
 input.buttonFunction {
+font-family: Sans-serif; family-name: Helvetica;
+width: 75px; height: 50px;
+color: #DCDCDC;
+}
+
+input.buttonFunctionSpecial {
 font-family: Sans-serif; family-name: Helvetica;
 width: 75px; height: 50px;
 }
@@ -65,10 +73,10 @@ color: teal;
         <td class="header"><i class='fa fa-github' style='color: #f3da35'></i>calc</td>
     </tr>
     <tr>
-        <td class="top">ВЕРХНЕЕ ПОЛЕ</td>
+        <td class="top">%s</td>
     </tr>
     <tr>
-        <td class="bottom">НИЖНЕЕ ПОЛЕ</td>
+        <td class="bottom">%s</td>
     </tr>
 </table>
 
@@ -76,17 +84,17 @@ color: teal;
     <tr>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="clearEntry" value="СЕ"></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="СЕ"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="clear" value="С"></p>
+                <p><input class="buttonFunctionSpecial" type="submit" name="answer" value="С"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="back" value="&#9003;"></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#9003;"></p>
             </form>
         </td>
         <td>
@@ -98,110 +106,110 @@ color: teal;
     <tr>
         <td class="=usual">
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="squareRoot" value="&#8730;х"></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#8730;х"></p>
             </form>
         </td>
         <td class="=usual">
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="percentage" value="%"></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#37;"></p>
             </form>
         </td>
         <td class="=usual">
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="squareNumber" value="x&#178;"></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="x&#178;"></p>
             </form>
         </td>
         <td class="=usual">
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="division" value="&#247;"></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#247;"></p>
             </form>
         </td>
     </tr>
     <tr>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="seven" value="7"></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="7"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="eight" value="8"></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="8"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="nine" value="9"></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="9"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="multiplication" value="&#215;"></p>
-            </form>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="four" value="4"></p>
-            </form>
-        </td>
-        <td>
-            <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="five" value="5"></p>
-            </form>
-        </td>
-        <td>
-            <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="six" value="6"></p>
-            </form>
-        </td>
-        <td>
-            <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="subtraction" value="-"></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="&#215;"></p>
             </form>
         </td>
     </tr>
     <tr>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="one" value="1"></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="4"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="two" value="2"></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="5"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="three" value="3"></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="6"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="sum" value="+"></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="-"></p>
             </form>
         </td>
     </tr>
     <tr>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="button" type="submit" name="signChange" value="&#177;"></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="1"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonDigit" type="submit" name="zero" value="0"></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="2"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="button" type="submit" name="dot" value=","></p>
+                <p><input class="buttonDigit" type="submit" name="answer" value="3"></p>
             </form>
         </td>
         <td>
             <form action="/calculator" method="get">
-                <p><input class="buttonFunction" type="submit" name="result" value="="></p>
+                <p><input class="buttonFunction" type="submit" name="answer" value="+"></p>
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="button" type="submit" name="answer" value="&#177;"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonDigit" type="submit" name="answer" value="0"></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="button" type="submit" name="answer" value=","></p>
+            </form>
+        </td>
+        <td>
+            <form action="/calculator" method="get">
+                <p><input class="buttonFunction" type="submit" name="answer" value="="></p>
             </form>
         </td>
     </tr>

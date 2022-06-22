@@ -1,727 +1,285 @@
 package com.step.hryshkin.servlet5;
 
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @WebServlet(urlPatterns = {"/calculator"})
 public class CalculatorPage extends HttpServlet {
-    public static boolean calculatorFirstLaunched = true;
-    //
-    public static StringBuilder topField = new StringBuilder("");
-    public static StringBuilder bottomField = new StringBuilder(" 0");
-    //
-    public static BigDecimal firstNumber = BigDecimal.valueOf(0);
-    public static BigDecimal secondNumber = BigDecimal.valueOf(0);
-    //
-    public static boolean digitInputOnGoing = true;
-    public static char currentOperation = 'n';
-    public static boolean digitInputOnGoingAfterDot = false;
-    public static boolean bottomFiledDigitIsNegative = false;
-    public static boolean errorStatus = false;
+    // РЕЖИМЫ РАБОТЫ СИСТЕМЫ
+    private static boolean calculatorFirstLaunched = true;               // РЕЖИМ "ПЕРВЫЙ ЗАПУСК"
+    private static boolean errorStatus = false;                          // РЕЖИМ "ОШИБКА КАЛЬКУЛЯТОРА"
+
+    // РЕЖИМЫ ВВОДА ЦИФР
+    private static boolean digitInputOnGoing = true;                     // ВВОД ЧИСЛА НАЧАТ
+    private static boolean digitInputOnGoingAfterDot = false;            // ВВОД ПОСЛЕ ЗАПЯТОЙ
+    private static boolean bottomFiledDigitIsNegative = false;           // МОДУЛЬ ОТРИЦАТЕЛЬНОГО ЧИСЛА
+
+    // ВЫВОД НА ЭКРАН
+    private static StringBuilder topField = new StringBuilder("");       // ОТОБРАЖАЕМОЕ ВЕРХННЕ ПОЛЕ
+    private static StringBuilder bottomField = new StringBuilder(" 0");  // ОТОБРАЖАЕМОЕ НИЖНЕЕ ПОЛЕ
+
+    // ДАННЫЕ ВЫЧИСЛЕНИЙ
+    public static BigDecimal firstNumber = BigDecimal.valueOf(0);        // ЗНАЧЕНИЕ ПЕРВОГО ОПЕРАНДА
+    public static BigDecimal secondNumber = BigDecimal.valueOf(0);       // ЗНАЧЕНИЕ ВТОРОГО ОПЕРАНДА
+    private static char currentOperation = 'n';                          // ЗНАЧЕНИЕ ОПЕРАТОРА
+    private static char lastPressedButton = '\u0000';                    // ПОСЛЕДНЯЯ НАЖАТАЯ КНОПКА
+
+    // СБРОС ПАРАМЕТРОВ КАЛЬКУЛЯТОРА ПО УМОЛЧАНИЮ
+    private void resetDefaults() {
+        calculatorFirstLaunched = true;
+        errorStatus = false;
+        digitInputOnGoing = true;
+        digitInputOnGoingAfterDot = false;
+        bottomFiledDigitIsNegative = false;
+        topField = new StringBuilder("");
+        bottomField = new StringBuilder(" 0");
+        firstNumber = BigDecimal.valueOf(0);
+        firstNumber = BigDecimal.valueOf(0);
+        currentOperation = 'n';
+        lastPressedButton = '\u0000';
+    }
+
+    // МЕТОД: ПРОВЕРКА БЫЛА ЛИ НАЖАТА КНОПКА И КАКАЯ ИМЕННО
+    private void checkingForInput(HttpServletRequest req) {
+        String input = req.getParameter("answer");
+        // ЕСЛИ РЕКВЕСТ НЕ ПУСТОЙ (КНОПКА НАЖАТА) - РАСПОЗНАЕМ ЗНАЧЕНИЕ КНОПКИ
+        if (input != null) lastPressedButton = receivedRequestProcessing(req.getParameter("answer"));
+            // ЕСЛИ РЕКВЕСТ ПУСТОЙ (СТРАНИЦА БРАУЗЕРА ПЕРЕЗАГРУЖЕНА) - ОБНУЛЯЕМ ВСЕ ПАРАМЕТРЫ
+        else resetDefaults();
+    }
+
+    // МЕТОД: ВЫХОДА ИЗ РЕЖИМА "ОШИБКА КАЛЬКУЛЯТОРА" ПО НАЖАТИЮ КЛАВИШИ CLEAR
+    private void errorModeSwitchOff() {
+        // ПРИ НАЖАТИИ КНОПКИ "CLEAR" - ВСЕ ПАРАМЕТРЫ ОБНУЛЯЮТСЯ
+        if (lastPressedButton == 'c') resetDefaults();
+
+            // ПРИ НАЖАТИИ ЛЮБЫХ ДРУГИХ КНОПОК -
+            // ВКЛЮЧАЕТСЯ РЕЖИМ "ПЕРВЫЙ ЗАПУСК", ЧТОБЫ ПРОПУСТИТЬ НИЖЕИДУЩИЙ БЛОК ВЫЧИСЛЕНИЙ
+        else calculatorFirstLaunched = true;
+    }
+
+    // МЕТОД: ОБРАБОТКА НАЖАТИЯ КНОПОК И ВЫЧИСЛЕНИЯ
+    private void actionsAndCalculations () {
+        // ВВОД ЦИФР 1-9
+        if ((lastPressedButton == '1') | (lastPressedButton == '2') | (lastPressedButton == '3') |
+                (lastPressedButton == '4') | (lastPressedButton == '5') | (lastPressedButton == '6') |
+                (lastPressedButton == '7') | (lastPressedButton == '8') | (lastPressedButton == '9')) {
+            // ЕСЛИ ВВОД ЧИСЛА НЕ НАЧАТ И ТЕКУЩАЯ ЦИФРА - ПЕРВАЯ
+            if (!digitInputOnGoing) {
+                bottomField = new StringBuilder(" ");                             // НУЖНА ОПТИМИЗАЦИЯ!
+            }
+            // ЗАЩИТА ОТ ОШИБКИ ВВОДА ЛИШНЕГО НУЛЯ В НАЧАЛЕ (" 0" > "09" > " 0")
+            else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2)) {
+                bottomField = new StringBuilder(" ");
+            }
+            bottomField.append(lastPressedButton);
+            digitInputOnGoing = true;
+            // ЗДЕСЬ СЛЕДУЕТ ДОБАВИТЬ ЗАЩИТУ ОТ ВЫХОДА ЗА ПРЕДЕЛЫ РАЗРЯДНОСТИ!!!!!
+
+            // ВВОД ЦИФРЫ 0
+        } else if (lastPressedButton == '0') {
+            // ЕСЛИ ВВОД ЧИСЛА НЕ НАЧАТ
+            if (!digitInputOnGoing) {
+                bottomField = new StringBuilder(" 0");
+                digitInputOnGoing = true;
+                // ЕСЛИ ВВОД ЧИСЛА НАЧАТ И ПРОДОЛЖАЕТСЯ
+            } else {
+                // ЗАЩИТА ОТ ОШИБКИ ВВОДА НУЛЯ В НАЧАЛЕ (" 0" > "00" > " 0")
+                if ((bottomField.length() == 2) & (bottomField.charAt(1) == '0')) {
+                    digitInputOnGoing = true;
+                    // ВВОД НУЛЯ В НАЧАЛЕ (" 1" > " 10")                          // НУЖНА ОПТИМИЗАЦИЯ!
+                } else if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
+                    bottomField.append("0");
+                    digitInputOnGoing = true;
+                    // ВВОД НУЛЯ В ЛЮБОМ ДРУГОМ МЕСТЕ ("-999" > "-9990")
+                } else if (bottomField.length() > 2) {
+                    bottomField.append("0");
+                    digitInputOnGoing = true;
+                }
+            }
+            // ЗДЕСЬ СЛЕДУЕТ ДОБАВИТЬ ЗАЩИТУ ОТ ВЫХОДА ЗА ПРЕДЕЛЫ РАЗРЯДНОСТИ!!!!!
+
+            // ВВОД ТОЧКИ
+        } else if (lastPressedButton == '.') {
+            if (!digitInputOnGoingAfterDot) {
+                bottomField.append(".");
+                digitInputOnGoing = true;
+                digitInputOnGoingAfterDot = true;
+            }
+
+            // УДАЛЕНИЕ ПОСЛЕДНЕГО ВВЕДЕННОГО ЗНАКА
+        } else if (lastPressedButton == 'b') {
+            if (digitInputOnGoing) {
+                int currentBottomFieldLength = bottomField.length();
+                if (currentBottomFieldLength == 2) {
+                    bottomField = new StringBuilder(" 0");
+                    bottomFiledDigitIsNegative = false;
+                    digitInputOnGoingAfterDot = false;
+                } else if ((currentBottomFieldLength == 4) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
+                    bottomField = new StringBuilder(" 0");
+                    bottomFiledDigitIsNegative = false;
+                    digitInputOnGoingAfterDot = false;
+                } else if ((currentBottomFieldLength == 3) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
+                    bottomField = new StringBuilder(" 0");
+                    bottomFiledDigitIsNegative = false;
+                    digitInputOnGoingAfterDot = false;
+                } else if (bottomField.charAt(currentBottomFieldLength - 1) == '.') {
+                    bottomField.setLength(currentBottomFieldLength - 1);
+                    digitInputOnGoingAfterDot = false;
+                } else bottomField.setLength(currentBottomFieldLength - 1);
+            }
+
+            // СБРОС ТЕКУЩЕГО ВВОДА
+        } else if (lastPressedButton == 'e') {
+            bottomField = new StringBuilder(" 0");
+            firstNumber = BigDecimal.valueOf(0);
+            digitInputOnGoingAfterDot = false;
+            digitInputOnGoing = true;
+            bottomFiledDigitIsNegative = false;
+
+            // ОБЩИЙ СБРОС
+        } else if (lastPressedButton == 'c') {
+            bottomField = new StringBuilder(" 0");
+            firstNumber = BigDecimal.valueOf(0);
+            topField = new StringBuilder("");
+            firstNumber = BigDecimal.valueOf(0);
+            digitInputOnGoingAfterDot = false;
+            digitInputOnGoing = true;
+            bottomFiledDigitIsNegative = false;
+            currentOperation = 'n';
+
+            // СМЕНА ЗНАКА ВВОДИМОГО ЧИСЛА
+        } else if (lastPressedButton == '&') {
+            if (digitInputOnGoing) {
+                if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
+                    if (!bottomFiledDigitIsNegative) {
+                        bottomField.setCharAt(0, '-');
+                        bottomFiledDigitIsNegative = true;
+                    } else {
+                        bottomField.setCharAt(0, ' ');
+                        bottomFiledDigitIsNegative = false;
+                    }
+                } else if (bottomField.length() >= 3) {
+                    if (!bottomFiledDigitIsNegative) {
+                        bottomField.setCharAt(0, '-');
+                        bottomFiledDigitIsNegative = true;
+                    } else {
+                        bottomField.setCharAt(0, ' ');
+                        bottomFiledDigitIsNegative = false;
+                    }
+                }
+            }
+
+            // ОСНОВНЫЕ ОПЕРАЦИИ
+        } else if ((lastPressedButton == '+') | (lastPressedButton == '-')
+                | (lastPressedButton == '*') | (lastPressedButton == '/')) {
+
+            if (currentOperation == 'n') {
+                topField.append(cleanInputBeforeOperation(bottomField));
+                firstNumber = new BigDecimal(String.valueOf(topField));
+                bottomField = new StringBuilder(topField);
+                topField.append(lastPressedButton);
+                secondNumber = firstNumber;
+                digitInputOnGoingAfterDot = false; // ДОБАВЛЕНО В 17-13 20.06.2022 - ВРОДЕ БЫ РАБОТАЕТ. НАБЛЮДАТЬ.
+            }
+            if ((currentOperation != 'n') & (!digitInputOnGoing)) {
+                topField.deleteCharAt(topField.length() - 1);
+                topField.append(lastPressedButton);
+            }
+            if ((currentOperation != 'n') & (digitInputOnGoing)) {
+                if (currentOperation == '+') {
+                    bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+                    secondNumber = new BigDecimal(String.valueOf(bottomField));
+
+                    firstNumber = firstNumber.add(secondNumber);                // ЗДЕСЬ - УБИРАТЬ ХВОСТ ИЗ НУЛЕЙ ПОСЛЕ ТОЧКИ
+                    secondNumber = firstNumber;
+                    bottomField = new StringBuilder(secondNumber.toString());
+                    topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                }
+                if (currentOperation == '-') {
+                    bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+                    secondNumber = new BigDecimal(String.valueOf(bottomField));
+
+                    firstNumber = firstNumber.subtract(secondNumber);
+                    secondNumber = firstNumber;
+                    bottomField = new StringBuilder(secondNumber.toString());
+                    topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                }
+                if (currentOperation == '/') {
+                    bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+                    secondNumber = new BigDecimal(String.valueOf(bottomField));
+
+                    if (secondNumber.compareTo(new BigDecimal(0)) != 0) {
+                        firstNumber = firstNumber
+                                .divide(secondNumber, 16, RoundingMode.HALF_UP)
+                                .stripTrailingZeros();
+
+                        secondNumber = firstNumber;
+                        bottomField = new StringBuilder(secondNumber.toString());
+                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                    }
+                    if (secondNumber.compareTo(new BigDecimal(0)) == 0) {
+                        topField = new StringBuilder("Деление на ноль невозможно!");
+                        bottomField = new StringBuilder("ОШИБКА");
+                        errorStatus = true;
+                    }
+
+                }
+                if (currentOperation == '*') {
+                    bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+                    secondNumber = new BigDecimal(String.valueOf(bottomField));
+                    firstNumber = firstNumber.multiply(secondNumber);
+                    secondNumber = firstNumber;
+                    bottomField = new StringBuilder(secondNumber.toString());
+                    topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
+                }
+            }
+            digitInputOnGoing = false;
+            currentOperation = lastPressedButton;
+        }
+    }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         resp.setContentType("text/html");
         resp.setCharacterEncoding("UTF-8");
 
-        //распознать, какая кнопка нажата
-        char lastPressedButton = '0';
-        if (!calculatorFirstLaunched) {
-            String input = req.getParameter("answer");
-            if (input != null) lastPressedButton = inputRecognition(req.getParameter("answer"));
-            else {
-                calculatorFirstLaunched = true;  // ПОМЕНЯЛ НА ТРУ - 20.06.2022 14-43 !!!!!!!!!!!!!!!!!!!!!!!!!!
-                bottomField = new StringBuilder(" 0");
-                firstNumber = BigDecimal.valueOf(0);
-                topField = new StringBuilder("");
-                firstNumber = BigDecimal.valueOf(0);
-                digitInputOnGoingAfterDot = false;
-                digitInputOnGoing = true;
-                bottomFiledDigitIsNegative = false;
-                currentOperation = 'n';
-            }
-        }
+        // 1 ШАГ (НЕ ОБРАБАТЫВАЕТСЯ ПРИ ПЕРВОМ ЗАПУСКЕ КАЛЬКУЛЯТОРА ДО НАЖАТИЯ КНОПОК ИНТЕРФЕЙСА)
+        if (!calculatorFirstLaunched) checkingForInput(req);
 
-        if (errorStatus) {
-            if (lastPressedButton == 'c') {
-                bottomField = new StringBuilder(" 0");
-                firstNumber = BigDecimal.valueOf(0);
-                topField = new StringBuilder("");
-                firstNumber = BigDecimal.valueOf(0);
-                digitInputOnGoingAfterDot = false;
-                digitInputOnGoing = true;
-                bottomFiledDigitIsNegative = false;
-                currentOperation = 'n';
-                errorStatus = false;
-            } else {
-                calculatorFirstLaunched = true;
-            }
-        }
+        // 2 ШАГ
+        // БЛОК РАБОТАЕТ ПРИ АКТИВНОМ РЕЖИМЕ "ОШИБКА КАЛЬКУЛЯТОРА"
+        if (errorStatus) errorModeSwitchOff();
 
-        if (!calculatorFirstLaunched) {         // ВСЯ ЛОГИКА В ЭТОМ БЛОКЕ/////////////////////////
-            if (lastPressedButton == '1') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("1");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '2') {
-                if (!digitInputOnGoing) {
-                    bottomField = new StringBuilder(" ");
-                } else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("2");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '3') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("3");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '4') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("4");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '5') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("5");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '6') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("6");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '7') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("7");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '8') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("8");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '9') {
-                if (!digitInputOnGoing) bottomField = new StringBuilder(" ");
-                else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2))
-                    bottomField = new StringBuilder(" ");
-                bottomField.append("9");
-                digitInputOnGoing = true;
-
-            } else if (lastPressedButton == '0') {
-                if (!digitInputOnGoing) {
-                    bottomField = new StringBuilder(" 0");
-                    digitInputOnGoing = true;
-                } else {
-                    if ((bottomField.length() == 2) & (bottomField.charAt(1) == '0')) {
-                        digitInputOnGoing = true;
-                    } else if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
-                        bottomField.append("0");
-                        digitInputOnGoing = true;
-                    } else if (bottomField.length() > 2) {
-                        bottomField.append("0");
-                        digitInputOnGoing = true;
-                    }
-                }
-
-            } else if (lastPressedButton == '.') {
-                if (!digitInputOnGoingAfterDot) {
-                    bottomField.append(".");
-                    digitInputOnGoing = true;
-                    digitInputOnGoingAfterDot = true;
-                }
-
-            } else if (lastPressedButton == 'b') {
-                if (digitInputOnGoing) {
-                    int currentBottomFieldLength = bottomField.length();
-                    if (currentBottomFieldLength == 2) {
-                        bottomField = new StringBuilder(" 0");
-                        bottomFiledDigitIsNegative = false;
-                        digitInputOnGoingAfterDot = false;
-                    } else if ((currentBottomFieldLength == 4) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
-                        bottomField = new StringBuilder(" 0");
-                        bottomFiledDigitIsNegative = false;
-                        digitInputOnGoingAfterDot = false;
-                    } else if ((currentBottomFieldLength == 3) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
-                        bottomField = new StringBuilder(" 0");
-                        bottomFiledDigitIsNegative = false;
-                        digitInputOnGoingAfterDot = false;
-                    } else if (bottomField.charAt(currentBottomFieldLength - 1) == '.') {
-                        bottomField.setLength(currentBottomFieldLength - 1);
-                        digitInputOnGoingAfterDot = false;
-                    } else bottomField.setLength(currentBottomFieldLength - 1);
-                }
-
-            } else if (lastPressedButton == 'e') {
-                bottomField = new StringBuilder(" 0");
-                firstNumber = BigDecimal.valueOf(0);
-                digitInputOnGoingAfterDot = false;
-                digitInputOnGoing = true;
-                bottomFiledDigitIsNegative = false;
-
-            } else if (lastPressedButton == 'c') {
-                bottomField = new StringBuilder(" 0");
-                firstNumber = BigDecimal.valueOf(0);
-                topField = new StringBuilder("");
-                firstNumber = BigDecimal.valueOf(0);
-                digitInputOnGoingAfterDot = false;
-                digitInputOnGoing = true;
-                bottomFiledDigitIsNegative = false;
-                currentOperation = 'n';
-
-            } else if (lastPressedButton == '&') {
-                if (digitInputOnGoing) {
-                    if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
-                        if (!bottomFiledDigitIsNegative) {
-                            bottomField.setCharAt(0, '-');
-                            bottomFiledDigitIsNegative = true;
-                        } else {
-                            bottomField.setCharAt(0, ' ');
-                            bottomFiledDigitIsNegative = false;
-                        }
-                    } else if (bottomField.length() >= 3) {
-                        if (!bottomFiledDigitIsNegative) {
-                            bottomField.setCharAt(0, '-');
-                            bottomFiledDigitIsNegative = true;
-                        } else {
-                            bottomField.setCharAt(0, ' ');
-                            bottomFiledDigitIsNegative = false;
-                        }
-                    }
-                }
-
-            } else if ((lastPressedButton == '+') | (lastPressedButton == '-')
-                    | (lastPressedButton == '*') | (lastPressedButton == '/')) {
-
-                if (currentOperation == 'n') {
-                    topField.append(cleanInputBeforeOperation(bottomField));
-                    firstNumber = new BigDecimal(String.valueOf(topField));
-                    bottomField = new StringBuilder(topField);
-                    topField.append(lastPressedButton);
-                    secondNumber = firstNumber;
-                    digitInputOnGoingAfterDot = false; // ДОБАВЛЕНО В 17-13 20.06.2022 - ВРОДЕ БЫ РАБОТАЕТ. НАБЛЮДАТЬ.
-                }
-                if ((currentOperation != 'n') & (!digitInputOnGoing)) {
-                    topField.deleteCharAt(topField.length() - 1);
-                    topField.append(lastPressedButton);
-                }
-                if ((currentOperation != 'n') & (digitInputOnGoing)) {
-                    if (currentOperation == '+') {
-                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                        secondNumber = new BigDecimal(String.valueOf(bottomField));
-
-                        firstNumber = firstNumber.add(secondNumber);                // ЗДЕСЬ - УБИРАТЬ ХВОСТ ИЗ НУЛЕЙ ПОСЛЕ ТОЧКИ
-                        secondNumber = firstNumber;
-                        bottomField = new StringBuilder(secondNumber.toString());
-                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
-                    }
-                    if (currentOperation == '-') {
-                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                        secondNumber = new BigDecimal(String.valueOf(bottomField));
-
-                        firstNumber = firstNumber.subtract(secondNumber);
-                        secondNumber = firstNumber;
-                        bottomField = new StringBuilder(secondNumber.toString());
-                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
-                    }
-                    if (currentOperation == '/') {
-                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                        secondNumber = new BigDecimal(String.valueOf(bottomField));
-
-                        if (secondNumber.compareTo(new BigDecimal(0)) != 0) {
-                            firstNumber = firstNumber
-                                    .divide(secondNumber, 16, RoundingMode.HALF_UP)
-                                    .stripTrailingZeros();
-
-                            secondNumber = firstNumber;
-                            bottomField = new StringBuilder(secondNumber.toString());
-                            topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
-                        }
-                        if (secondNumber.compareTo(new BigDecimal(0)) == 0) {
-                            topField = new StringBuilder("Деление на ноль невозможно!");
-                            bottomField = new StringBuilder("ОШИБКА");
-                            errorStatus = true;
-                        }
-
-                    }
-                    if (currentOperation == '*') {
-                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                        secondNumber = new BigDecimal(String.valueOf(bottomField));
-                        firstNumber = firstNumber.multiply(secondNumber);
-                        secondNumber = firstNumber;
-                        bottomField = new StringBuilder(secondNumber.toString());
-                        topField = new StringBuilder(secondNumber.toString()).append(currentOperation);
-                    }
-                }
-                digitInputOnGoing = false;
-                currentOperation = lastPressedButton;
-            }
-
-        } // ВСЯ ЛОГИКА В ЭТОМ БЛОКЕ///////////////////////////////////////////////////////////////////////////
+        // 3 ШАГ
+        // БЛОК ОБРАБОТКИ НАЖАТИЯ КНОПОК И ВЫЧИСЛЕНИЙ
+        // НЕ ОБРАБАТЫВАЕТСЯ ПРИ ПЕРВОМ ЗАПУСКЕ И В РЕЖИМЕ "ОШИБКА КАЛЬКУЛЯТОРА"
+        if (!calculatorFirstLaunched) actionsAndCalculations();
 
         calculatorFirstLaunched = false;
 
         if (!errorStatus) {
-            resp.getWriter().println("<!DOCTYPE html>\n" +
-                    "<html lang=\"en\">\n" +
-                    "<head>\n" +
-                    "    <meta charset=\"UTF-8\">\n" +
-                    "    <title>Калькултор на сервлете</title>\n" +
-                    "    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>\n" +
-                    "    <style type=\"text/css\">\n" +
-                    "\n" +
-                    "body { background: gray; }\n" +
-                    "\n" +
-                    "table.top { background: white; margin-left: auto; margin-right: auto;}\n" +
-                    "\n" +
-                    "table.bottom { background: #DCDCDC; margin-left: auto; margin-right: auto; }\n" +
-                    "\n" +
-                    "td.header {\n" +
-                    "font-family: Monospace; family-name: Andele Mono; font-size: small;\n" +
-                    "background: gray;\n" +
-                    "color: white;\n" +
-                    "text-align: left;\n" +
-                    "}\n" +
-                    "\n" +
-                    "td.top {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica; font-size: small;\n" +
-                    "background: white; color: #2F4F4F;\n" +
-                    "width: 312px; height: 25px;\n" +
-                    "text-align: right;\n" +
-                    "}\n" +
-                    "\n" +
-                    "td.bottom {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica; font-size: x-large;\n" +
-                    "background: white; color: #2F4F4F;\n" +
-                    "width: 312px; height: 40px;\n" +
-                    "text-align: right;\n" +
-                    "}\n" +
-                    "\n" +
-                    "td.crutch { background: #DCDCDC; color: #DCDCDC; }\n" +
-                    "\n" +
-                    "form {width: 75px; height: 30px; }\n" +
-                    "\n" +
-                    "input.button{\n" +
-                    "font-family: Sans-serif; family-name: Helvetica;\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "}\n" +
-                    "\n" +
-                    "input.buttonDigit {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica; font-weight: bold;\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "}\n" +
-                    "\n" +
-                    "input.buttonFunction {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica;\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "}\n" +
-                    "\n" +
-                    "input.gitHubButton {\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "color: teal;\n" +
-                    "}\n" +
-                    "    </style>\n" +
-                    "\n" +
-                    "</head>\n" +
-                    "<body>\n" +
-                    "<table class=\"top\">\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"header\"><i class='fa fa-github' style='color: #f3da35'></i>calc</td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"top\">" + topField.toString() + "</td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"bottom\">" + bottomField.toString() + "</td>\n" +
-                    "    </tr>\n" +
-                    "</table>\n" +
-                    "\n" +
-                    "<table class=\"bottom\">\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"СЕ\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"С\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#9003;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"https://github.com/make-me-unsee-it/WebCalculator\" method=\"get\">\n" +
-                    "                <p><input class=\"gitHubButton\" type=\"submit\" value=\"GitHub\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"=usual\">\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#8730;х\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td class=\"=usual\">\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"%\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td class=\"=usual\">\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"x&#178;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td class=\"=usual\">\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#247;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"7\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"8\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"9\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#215;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"4\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"5\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"6\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"-\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"1\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"2\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"3\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"+\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\"&#177;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"0\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\",\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"=\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"crutch\">.</td>\n" +
-                    "    </tr>\n" +
-                    "</table>\n" +
-                    "</body>\n" +
-                    "</html>");
+            try {
+                resp.getWriter().println(String.format(ResourceReader
+                        .webPageContentToString("calc_page_source.html"), topField, bottomField));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
-            resp.getWriter().println("<!DOCTYPE html>\n" +
-                    "<html lang=\"en\">\n" +
-                    "<head>\n" +
-                    "    <meta charset=\"UTF-8\">\n" +
-                    "    <title>Калькултор на сервлете</title>\n" +
-                    "    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>\n" +
-                    "    <style type=\"text/css\">\n" +
-                    "\n" +
-                    "body { background: gray; }\n" +
-                    "\n" +
-                    "table.top { background: white; margin-left: auto; margin-right: auto;}\n" +
-                    "\n" +
-                    "table.bottom { background: #DCDCDC; margin-left: auto; margin-right: auto; }\n" +
-                    "\n" +
-                    "td.header {\n" +
-                    "font-family: Monospace; family-name: Andele Mono; font-size: small;\n" +
-                    "background: gray;\n" +
-                    "color: white;\n" +
-                    "text-align: left;\n" +
-                    "}\n" +
-                    "\n" +
-                    "td.top {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica; font-size: small;\n" +
-                    "background: white; color: #2F4F4F;\n" +
-                    "width: 312px; height: 25px;\n" +
-                    "text-align: right;\n" +
-                    "}\n" +
-                    "\n" +
-                    "td.bottom {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica; font-size: x-large;\n" +
-                    "background: white; color: #2F4F4F;\n" +
-                    "width: 312px; height: 40px;\n" +
-                    "text-align: right;\n" +
-                    "}\n" +
-                    "\n" +
-                    "td.crutch { background: #DCDCDC; color: #DCDCDC; }\n" +
-                    "\n" +
-                    "form {width: 75px; height: 30px; }\n" +
-                    "\n" +
-                    "input.button{\n" +
-                    "font-family: Sans-serif; family-name: Helvetica;\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "color: #DCDCDC;\n" +
-                    "}\n" +
-                    "\n" +
-                    "input.buttonDigit {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica; font-weight: bold;\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "color: #DCDCDC;\n" +
-                    "}\n" +
-                    "\n" +
-                    "input.buttonFunction {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica;\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "color: #DCDCDC;\n" +
-                    "}\n" +
-                    "\n" +
-                    "input.buttonFunctionSpecial {\n" +
-                    "font-family: Sans-serif; family-name: Helvetica;\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "}\n" +
-                    "\n" +
-                    "input.gitHubButton {\n" +
-                    "width: 75px; height: 50px;\n" +
-                    "color: teal;\n" +
-                    "}\n" +
-                    "    </style>\n" +
-                    "\n" +
-                    "</head>\n" +
-                    "<body>\n" +
-                    "<table class=\"top\">\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"header\"><i class='fa fa-github' style='color: #f3da35'></i>calc</td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"top\">" + topField.toString() + "</td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"bottom\">" + bottomField.toString() + "</td>\n" +
-                    "    </tr>\n" +
-                    "</table>\n" +
-                    "\n" +
-                    "<table class=\"bottom\">\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"СЕ\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunctionSpecial\" type=\"submit\" name=\"answer\" value=\"С\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#9003;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"https://github.com/make-me-unsee-it/WebCalculator\" method=\"get\">\n" +
-                    "                <p><input class=\"gitHubButton\" type=\"submit\" value=\"GitHub\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"=usual\">\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#8730;х\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td class=\"=usual\">\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"%\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td class=\"=usual\">\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"x&#178;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td class=\"=usual\">\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#247;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"7\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"8\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"9\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"&#215;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"4\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"5\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"6\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"-\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"1\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"2\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"3\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"+\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\"&#177;\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonDigit\" type=\"submit\" name=\"answer\" value=\"0\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"button\" type=\"submit\" name=\"answer\" value=\",\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "        <td>\n" +
-                    "            <form action=\"/calculator\" method=\"get\">\n" +
-                    "                <p><input class=\"buttonFunction\" type=\"submit\" name=\"answer\" value=\"=\"></p>\n" +
-                    "            </form>\n" +
-                    "        </td>\n" +
-                    "    </tr>\n" +
-                    "    <tr>\n" +
-                    "        <td class=\"crutch\">.</td>\n" +
-                    "    </tr>\n" +
-                    "</table>\n" +
-                    "</body>\n" +
-                    "</html>");
+            try {
+                resp.getWriter().println(String.format(ResourceReader
+                        .webPageContentToString("calc_page_error_source.html"), topField, bottomField));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    public char inputRecognition(String input) {
+    public char receivedRequestProcessing(String input) {
         switch (input) {
             case "СЕ":
                 return 'e';            //clear entry
@@ -768,7 +326,7 @@ public class CalculatorPage extends HttpServlet {
             case ",":
                 return '.';             //dot
             default:
-                return '=';              //result
+                return '=';             //result
         }
     }
 
