@@ -8,7 +8,7 @@ public class ResourceReader {
     private ResourceReader() {
     }
 
-    public static String webPageContentToString(String fileName) throws Exception {
+    protected static String webPageContentToString(String fileName) throws Exception {
         return Files.readString(Paths.get(Objects
                 .requireNonNull(ResourceReader.class
                         .getResource(String.format("/%s", fileName))).toURI()));
