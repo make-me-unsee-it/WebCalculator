@@ -20,7 +20,7 @@ public class CalculatorCore {
 
     // ДАННЫЕ ВЫЧИСЛЕНИЙ
     private static BigDecimal firstNumber = BigDecimal.valueOf(0);       // ЗНАЧЕНИЕ ПЕРВОГО ОПЕРАНДА
-    public static BigDecimal secondNumber = BigDecimal.valueOf(0);       // ЗНАЧЕНИЕ ВТОРОГО ОПЕРАНДА
+    private static BigDecimal secondNumber = BigDecimal.valueOf(0);       // ЗНАЧЕНИЕ ВТОРОГО ОПЕРАНДА
     private static char currentOperation = 'n';                          // ЗНАЧЕНИЕ ОПЕРАТОРА
     private static char lastPressedButton = '\u0000';                    // ПОСЛЕДНЯЯ НАЖАТАЯ КНОПКА
 
@@ -64,12 +64,12 @@ public class CalculatorCore {
             // В ОБЫЧНОМ РЕЖИМЕ
             if (!errorStatus) {
                 displayedPage = String.format(ResourceReader
-                        .webPageContentToString("calc_page_source.html"), topField, bottomField);
+                        .webPageContentToString("calc_page_source.html"), topField, bottomField, debugReportPrint());
 
                 // В РЕЖИМЕ "ОШИБКА КАЛЬКУЛЯТОРА"
             } else {
                 displayedPage = String.format(ResourceReader
-                        .webPageContentToString("calc_page_error_source.html"), topField, bottomField);
+                        .webPageContentToString("calc_page_error_source.html"), topField, bottomField, debugReportPrint());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -80,7 +80,6 @@ public class CalculatorCore {
     // МЕТОД: ПРОВЕРКА БЫЛА ЛИ НАЖАТА КНОПКА И КАКАЯ ИМЕННО
     private static void checkingForInput(HttpServletRequest req) {
         String input = req.getParameter("answer");
-        System.out.println(debugReportPrint());
         // ЕСЛИ РЕКВЕСТ НЕ ПУСТОЙ (КНОПКА НАЖАТА) - РАСПОЗНАЕМ ЗНАЧЕНИЕ КНОПКИ
         if (input != null) lastPressedButton = receivedRequestProcessing(req.getParameter("answer"));
             // ЕСЛИ РЕКВЕСТ ПУСТОЙ (СТРАНИЦА БРАУЗЕРА ПЕРЕЗАГРУЖЕНА) - ОБНУЛЯЕМ ВСЕ ПАРАМЕТРЫ
@@ -344,18 +343,19 @@ public class CalculatorCore {
         return input.toString();
     }
 
+    // РЕЖИМ ОТЛАДКИ
     public static String debugReportPrint() {
-        return " calculatorFirstLaunched: " + calculatorFirstLaunched +
-                "\n errorStatus: " + errorStatus +
-                "\n digitInputOnGoing: " + digitInputOnGoing +
-                "\n digitInputOnGoingAfterDot: " + digitInputOnGoingAfterDot +
-                "\n bottomFiledDigitIsNegative: " + bottomFiledDigitIsNegative +
-                "\n bottomFiledDigitIsNegative: " + bottomFiledDigitIsNegative +
-                "\n topField: \"" + topField + "\"" +
-                "\n bottomField: \"" + bottomField + "\"" +
-                "\n firstNumber: \"" + firstNumber + "\"" +
-                "\n secondNumber: \"" + secondNumber + "\"" +
-                "\n currentOperation: \"" + currentOperation + "\"" +
-                "\n lastPressedButton: \"" + lastPressedButton + "\"";
+        return "<p class=\"debug\"><br> calculatorFirstLaunched: " + calculatorFirstLaunched +
+                "<br> errorStatus: " + errorStatus +
+                "<br> digitInputOnGoing: " + digitInputOnGoing +
+                "<br> digitInputOnGoingAfterDot: " + digitInputOnGoingAfterDot +
+                "<br> bottomFiledDigitIsNegative: " + bottomFiledDigitIsNegative +
+                "<br> bottomFiledDigitIsNegative: " + bottomFiledDigitIsNegative +
+                "<br> topField: \"" + topField + "\"" +
+                "<br> bottomField: \"" + bottomField + "\"" +
+                "<br> firstNumber: \"" + firstNumber + "\"" +
+                "<br> secondNumber: \"" + secondNumber + "\"" +
+                "<br> currentOperation: \"" + currentOperation + "\"" +
+                "<br> lastPressedButton: \"" + lastPressedButton + "\"</p>";
     }
 }

@@ -10,6 +10,11 @@ import java.io.IOException;
 public class ServletPage extends HttpServlet {
 
     @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        doGet(req, resp);
+    }
+
+    @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         CalculatorCore.processing(req);
         resp.setContentType("text/html");
