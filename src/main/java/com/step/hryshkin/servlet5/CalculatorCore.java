@@ -58,13 +58,10 @@ public class CalculatorCore {
         // 1 ШАГ (НЕ ОБРАБАТЫВАЕТСЯ ПРИ ПЕРВОМ ЗАПУСКЕ КАЛЬКУЛЯТОРА ДО НАЖАТИЯ КНОПОК ИНТЕРФЕЙСА)
         if (!calculatorFirstLaunched) checkingForInput(req);
 
-        // 2 ШАГ
-        // БЛОК РАБОТАЕТ ПРИ АКТИВНОМ РЕЖИМЕ "ОШИБКА КАЛЬКУЛЯТОРА"
+        // 2 ШАГ ОБРАБОТКА РЕЖИМА "ОШИБКА КАЛЬКУЛЯТОРА"
         if (errorStatus) errorModeSwitchOff();
 
-        // 3 ШАГ
-        // БЛОК ОБРАБОТКИ НАЖАТИЯ КНОПОК И ВЫЧИСЛЕНИЙ
-        // НЕ ОБРАБАТЫВАЕТСЯ ПРИ ПЕРВОМ ЗАПУСКЕ И В РЕЖИМЕ "ОШИБКА КАЛЬКУЛЯТОРА"
+        // 3 ШАГ ВЫЧИСЛЕНИЯ. ИГНОРИРУЕТСЯ В РЕЖИМЕ "ПЕРВЫЙ ЗАПУСК" И "ОШИБКА КАЛЬКУЛЯТОРА"
         if (!calculatorFirstLaunched) actionsAndCalculations();
 
         // СБРОС ФЛАЖКА ПРОВЕРКИ РЕЖИМА "ПЕРВЫЙ ЗАПУСК"
@@ -74,17 +71,11 @@ public class CalculatorCore {
     // ВЫЗЫВАЕМЫЙ ИЗ КЛАССА-СЕРВЛЕТА МЕТОД ВЫВОДА ВЕБ-СТРАНИЦЫ В ФОРМАТЕ STRING
     protected static String contextPageToString() {
         String displayedPage = "";
+        String resourcePath = "calc_page_source.html";
+        if (errorStatus) resourcePath = "calc_page_error_source.html";
         try {
-            // В ОБЫЧНОМ РЕЖИМЕ
-            if (!errorStatus) {
-                displayedPage = String.format(ResourceReader
-                        .webPageContentToString("calc_page_source.html"), topField, bottomField, debugReportPrint());
-
-                // В РЕЖИМЕ "ОШИБКА КАЛЬКУЛЯТОРА"
-            } else {
-                displayedPage = String.format(ResourceReader
-                        .webPageContentToString("calc_page_error_source.html"), topField, bottomField, debugReportPrint());
-            }
+            displayedPage = String.format(ResourceReader
+                    .webPageContentToString(resourcePath), topField, bottomField, debugReportPrint());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -104,7 +95,6 @@ public class CalculatorCore {
     private static void errorModeSwitchOff() {
         // ПРИ НАЖАТИИ КНОПКИ "CLEAR" - ВСЕ ПАРАМЕТРЫ ОБНУЛЯЮТСЯ
         if (lastPressedButton == 'c') resetDefaultsAll();
-
             // ПРИ НАЖАТИИ ЛЮБЫХ ДРУГИХ КНОПОК -
             // ВКЛЮЧАЕТСЯ РЕЖИМ "ПЕРВЫЙ ЗАПУСК", ЧТОБЫ ПРОПУСТИТЬ НИЖЕИДУЩИЙ БЛОК ВЫЧИСЛЕНИЙ
         else calculatorFirstLaunched = true;
@@ -112,363 +102,401 @@ public class CalculatorCore {
 
     // МЕТОД: ОБРАБОТКА НАЖАТИЯ КНОПОК И ВЫЧИСЛЕНИЯ
     private static void actionsAndCalculations() {
-        // ВВОД ЦИФР 1-9
         if ((lastPressedButton == '1') | (lastPressedButton == '2') | (lastPressedButton == '3') |
                 (lastPressedButton == '4') | (lastPressedButton == '5') | (lastPressedButton == '6') |
                 (lastPressedButton == '7') | (lastPressedButton == '8') | (lastPressedButton == '9')) {
-            // ЕСЛИ ВВОД ЧИСЛА НЕ НАЧАТ И ТЕКУЩАЯ ЦИФРА - ПЕРВАЯ
-            if (!digitInputOnGoing) {
-                bottomField = new StringBuilder(" ");
-                digitInputCount = 0;
-            }
-            // ЗАЩИТА ОТ ОШИБКИ ВВОДА ЛИШНЕГО НУЛЯ В НАЧАЛЕ (" 0" > "09" > " 0")
-            else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2)) {
-                bottomField = new StringBuilder(" ");
-                digitInputCount = 0;
-            }
-            // ВВОД ЦИФР С ЗАЩИТОЙ (МАКСИМУМ 16 ЦИФР)
-            if (digitInputCount < 16) {
-                bottomField.append(lastPressedButton);
-                digitInputOnGoing = true;
-                digitInputCount = digitInputCount + 1;
-            }
+            actionsOnClickDigits();
 
-            // ВВОД ЦИФРЫ 0
         } else if (lastPressedButton == '0') {
-            // ЕСЛИ ВВОД ЧИСЛА НЕ НАЧАТ
-            if (!digitInputOnGoing) {
-                resetDefaultsCurrent();
-                // ЕСЛИ ВВОД ЧИСЛА НАЧАТ И ПРОДОЛЖАЕТСЯ (ОГРАНИЧЕНИЕ - 16 ЦИФР)
-            } else if (digitInputCount < 16) {
-                // ЗАЩИТА ОТ ОШИБКИ ВВОДА НУЛЯ В НАЧАЛЕ (" 0" > "00" > " 0")
-                if ((bottomField.length() == 2) & (bottomField.charAt(1) == '0')) {
-                    digitInputOnGoing = true;
-                    // ВВОД НУЛЯ В НАЧАЛЕ (" 1" > " 10")                          // НУЖНА ОПТИМИЗАЦИЯ!
-                } else if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
-                    bottomField.append("0");
-                    digitInputOnGoing = true;
-                    digitInputCount = digitInputCount + 1;
-                    // ВВОД НУЛЯ В ЛЮБОМ ДРУГОМ МЕСТЕ ("-999" > "-9990")
-                } else if (bottomField.length() > 2) {
-                    bottomField.append("0");
-                    digitInputOnGoing = true;
-                    digitInputCount = digitInputCount + 1;
-                }
-            }
+            actionsOnClickZero();
 
-            // ВВОД ТОЧКИ
         } else if (lastPressedButton == '.') {
-            if (!digitInputOnGoingAfterDot) {
-                bottomField.append(".");
-                digitInputOnGoing = true;
-                digitInputOnGoingAfterDot = true;
-            }
+            actionsOnClickDot();
 
-            // УДАЛЕНИЕ ПОСЛЕДНЕГО ВВЕДЕННОГО ЗНАКА
         } else if (lastPressedButton == 'b') {
-            if (digitInputOnGoing) {
-                int currentBottomFieldLength = bottomField.length();
-                if (currentBottomFieldLength == 2) {
-                    resetDefaultsCurrent();
-                } else if ((currentBottomFieldLength == 4) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
-                    resetDefaultsCurrent();
-                } else if ((currentBottomFieldLength == 3) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
-                    resetDefaultsCurrent();
-                } else if (bottomField.charAt(currentBottomFieldLength - 1) == '.') {
-                    bottomField.setLength(currentBottomFieldLength - 1);
-                    digitInputOnGoingAfterDot = false;
-                } else {
-                    bottomField.setLength(currentBottomFieldLength - 1);
-                    digitInputCount = digitInputCount - 1;
-                }
-            }
+            actionsOnClickBackspace();
 
-            // СБРОС ТЕКУЩЕГО ВВОДА (CLEAR ENTRY)
         } else if (lastPressedButton == 'e') {
             resetDefaultsCurrent();
 
-            // ОБЩИЙ СБРОС (CLEAR ALL)
         } else if (lastPressedButton == 'c') {
             resetDefaultsAll();
 
-            // СМЕНА ЗНАКА ВВОДИМОГО ЧИСЛА (+/-)
-        } else if ((lastPressedButton == '&') & (digitInputOnGoing)) {
-            if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
-                if (!bottomFiledDigitIsNegative) {
-                    bottomField.setCharAt(0, '-');
-                    bottomFiledDigitIsNegative = true;
-                } else {
-                    bottomField.setCharAt(0, ' ');
-                    bottomFiledDigitIsNegative = false;
-                }
-            } else if (bottomField.length() >= 3) {
-                if (!bottomFiledDigitIsNegative) {
-                    bottomField.setCharAt(0, '-');
-                    bottomFiledDigitIsNegative = true;
-                } else {
-                    bottomField.setCharAt(0, ' ');
-                    bottomFiledDigitIsNegative = false;
-                }
-            }
+        } else if (lastPressedButton == '&') {
+            if (digitInputOnGoing) actionsOnClickSignChangeButton();
 
-            // ОСНОВНЫЕ АРИФМЕТИЧЕСКИЕ ОПЕРАЦИИ
-        } else if ((lastPressedButton == '+') | (lastPressedButton == '-')
-                | (lastPressedButton == '*') | (lastPressedButton == '/')) {
+        } else if (lastPressedButton == '+') {
+            actionsOnClickSumSubDivMulCommon();
+            if ((currentOperation != 'n') & (digitInputOnGoing)) actionsOnClickSumSpecific();
+            actionsOnClickSumSubDivMulCommonFinal();
 
-            // ВЫБОР ОПЕРАТОРА ПОСЛЕ ВВОДА ПЕРВОГО ЧИСЛА
-            if (currentOperation == 'n') {
-                // ОБНОВЛЯЕМ ЗНАЧЕНИЕ ВЕРХНЕГО ПОЛЯ ПЕРВЫМ ВВЕДЕННЫМ ЧИСЛОМ С ПРОВЕРКОЙ КОРРЕКТНОСТИ ВВОДА
-                // (НАПРИМЕР "0.450000" > "0.45")
-                topField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                // ФИКСИРУЕМ ПЕРВОЕ ЧИСЛО В ПАМЯТЬ ("0" > "45")
-                firstNumber = new BigDecimal(String.valueOf(topField));
-                // В НИЖНЕЕ ПОЛЕ ДУБЛИРУЕМ ЗНАЧЕНИЕ ВЕРХНЕГО
-                // (ДЛЯ АВТОВВОДА ПРИ ПОСЛЕДУЮЩЕМ НАЖАТИИ "=" БЕЗ ВВОДА ВТОРОГО ЧИСЛА ДЛЯ ОПЕРАЦИИ ЧИСЛА С САМИМ СОБОЙ)
-                bottomField = new StringBuilder(topField);
-                // ТО ЖЕ САМОЕ ДЕЛАЕМ ДЛЯ ЧИСЕЛ
-                secondNumber = firstNumber;
-                // ОБНОВЛЯЕМ ЗНАЧЕНИЕ ВЕРХНЕГО ПОЛЯ ВВЕДЕННЫМ ОПЕРАНДОМ (НАПРИМЕР "0.45" > "0.45+")
-                topField.append(lastPressedButton);
-            }
+        } else if (lastPressedButton == '-') {
+            actionsOnClickSumSubDivMulCommon();
+            if ((currentOperation != 'n') & (digitInputOnGoing)) actionsOnClickSubtractionSpecific();
+            actionsOnClickSumSubDivMulCommonFinal();
 
-            // ИЗМЕНЕНИЕ УЖЕ ВЫБРАННОГО ОПЕРАТОРА ДО ВВОДА ВТОРОГО ЧИСЛА
-            if ((currentOperation != 'n') & (!digitInputOnGoing)) {
-                topField = new StringBuilder(bottomField).append(lastPressedButton);
-            }
+        } else if (lastPressedButton == '/') {
+            actionsOnClickSumSubDivMulCommon();
+            if ((currentOperation != 'n') & (digitInputOnGoing)) actionsOnClickDivisionSpecific();
+            actionsOnClickSumSubDivMulCommonFinal();
 
-            // ВЫПОЛНЕНИЕ АРИФМЕТИЧЕСКИХ ОПЕРАЦИЙ ПРИ ВВЕДЕННЫХ ПЕРВОМ И ВТОРОМ ЧИСЛАХ
-            if ((currentOperation != 'n') & (digitInputOnGoing)) {
-
-                // СЛОЖЕНИЕ
-                if (currentOperation == '+') {
-                    bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                    secondNumber = new BigDecimal(String.valueOf(bottomField));
-                    firstNumber = firstNumber.add(secondNumber).stripTrailingZeros();
-                    // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                    outOfBoundsCheck(firstNumber);
-                    if (!errorStatus) {
-                        secondNumber = firstNumber;
-                        bottomField = new StringBuilder(secondNumber.toPlainString());
-                        // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
-                        stripTrailingDigitsAfterDotForBottomField();
-                        topField = new StringBuilder(secondNumber.toPlainString()).append(lastPressedButton);
-                    }
-                }
-
-                // ВЫЧИТАНИЕ
-                if (currentOperation == '-') {
-                    bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                    secondNumber = new BigDecimal(String.valueOf(bottomField));
-                    firstNumber = firstNumber.subtract(secondNumber).stripTrailingZeros();
-                    // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                    outOfBoundsCheck(firstNumber);
-                    if (!errorStatus) {
-                        secondNumber = firstNumber;
-                        bottomField = new StringBuilder(secondNumber.toPlainString());
-                        // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
-                        stripTrailingDigitsAfterDotForBottomField();
-                        topField = new StringBuilder(secondNumber.toPlainString()).append(lastPressedButton);
-                    }
-                }
-
-                // ДЕЛЕНИЕ
-                if (currentOperation == '/') {
-                    bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                    secondNumber = new BigDecimal(String.valueOf(bottomField));
-                    // ЗАЩИТА ОТ ДЕЛЕНИЯ НА НОЛЬ
-                    if (secondNumber.compareTo(new BigDecimal(0)) != 0) {
-                        firstNumber = firstNumber
-                                .divide(secondNumber, 16, RoundingMode.HALF_UP)
-                                .stripTrailingZeros();
-                        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                        outOfBoundsCheck(firstNumber);
-                        if (!errorStatus) {
-                            secondNumber = firstNumber;
-                            bottomField = new StringBuilder(secondNumber.toPlainString());
-                            // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
-                            stripTrailingDigitsAfterDotForBottomField();
-                            topField = new StringBuilder(secondNumber.toPlainString()).append(lastPressedButton);
-                        }
-                    }
-                    // ЗАЩИТА ОТ ДЕЛЕНИЯ НА НОЛЬ - ВЫЗОВ РЕЖИМА ОШИБКИ
-                    if (secondNumber.compareTo(new BigDecimal(0)) == 0) {
-                        topField = new StringBuilder("Деление на ноль невозможно!");
-                        bottomField = new StringBuilder("ОШИБКА");
-                        errorStatus = true;
-                    }
-                }
-
-                // УМНОЖЕНИЕ
-                if (currentOperation == '*') {
-                    bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                    secondNumber = new BigDecimal(String.valueOf(bottomField));
-                    firstNumber = firstNumber.multiply(secondNumber).stripTrailingZeros();
-                    // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                    outOfBoundsCheck(firstNumber);
-                    if (!errorStatus) {
-                        secondNumber = firstNumber;
-                        bottomField = new StringBuilder(secondNumber.toPlainString());
-                        // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
-                        stripTrailingDigitsAfterDotForBottomField();
-                        topField = new StringBuilder(secondNumber.toPlainString()).append(lastPressedButton);
-                    }
-                }
-            }
-
-            // ПОСЛЕ НАЖАТИЯ КНОПКИ ОПЕРАЦИЙ ОТКЛЮЧАЕМ РЕЖИМ ВВОДА ЧИСЛА
-            digitInputOnGoing = false;
-            digitInputOnGoingAfterDot = false;
-            bottomFiledDigitIsNegative = false;
-            digitInputCount = 0;
-            currentOperation = lastPressedButton;
-
+        } else if (lastPressedButton == '*') {
+            actionsOnClickSumSubDivMulCommon();
+            if ((currentOperation != 'n') & (digitInputOnGoing)) actionsOnClickMultiplicationSpecific();
+            actionsOnClickSumSubDivMulCommonFinal();
 
             // ВЫПОЛНЕНИЕ ОПЕРАЦИЙ ПРИ НАЖАТИИ КНОПКИ "="
         } else if (lastPressedButton == '=') {
-
-            // ПРИ НАЖАТИИ "=" ДО НАЖАТИЯ ОПЕРАТОРА (ПРИ ВВЕДЕННОМ ПЕРВОМ ЧИСЛЕ ЛИБО СО ЗНАЧЕНИЕМ "0")
-            if (currentOperation == 'n') {
-                // ОБНОВЛЯЕМ ЗНАЧЕНИЕ ВЕРХНЕГО ПОЛЯ ПЕРВЫМ ВВЕДЕННЫМ ЧИСЛОМ С ПРОВЕРКОЙ КОРРЕКТНОСТИ ВВОДА
-                // (НАПРИМЕР "0.450000" > "0.45")
-                topField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                // ФИКСИРУЕМ ПЕРВОЕ ЧИСЛО В ПАМЯТЬ ("0" > "45")
-                firstNumber = new BigDecimal(String.valueOf(topField));
-                // В НИЖНЕЕ ПОЛЕ ДУБЛИРУЕМ ЗНАЧЕНИЕ ВЕРХНЕГО
-                // (ДЛЯ АВТОВВОДА ПРИ ПОСЛЕДУЮЩЕМ НАЖАТИИ "=" БЕЗ ВВОДА ВТОРОГО ЧИСЛА ДЛЯ ОПЕРАЦИИ ЧИСЛА С САМИМ СОБОЙ)
-                bottomField = new StringBuilder(topField);
-                // ТО ЖЕ САМОЕ ДЕЛАЕМ ДЛЯ ЧИСЕЛ
-                secondNumber = firstNumber;
-                // ОБНОВЛЯЕМ ЗНАЧЕНИЕ ВЕРХНЕГО ПОЛЯ ВВЕДЕННЫМ ОПЕРАНДОМ (НАПРИМЕР "0.45" > "0.45+")
-                topField.append(lastPressedButton);
-            } // ЭТОТ БЛОК РАБОТАЕТ БЕЗ ИЗМЕНЕНИЙ (ДОБАВИТЬ В ШАПКЕ "=") !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+            actionsOnClickResultCommon();
             // ВЫПОЛНЕНИЕ АРИФМЕТИЧЕСКИХ ОПЕРАЦИЙ ПОСЛЕ ВЫБОРА ОПЕРАТОРА
             if (currentOperation != 'n') {
-
-                // СЛОЖЕНИЕ
                 if (currentOperation == '+') {
-                    // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА БЫЛ НАЧАТ ВВОД ВТОРОГО ЧИСЛА
-                    if (digitInputOnGoing) {
-                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                        topField.append(bottomField).append(lastPressedButton);
-                        secondNumber = new BigDecimal(String.valueOf(bottomField));
-                    }
-                    // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА ОТРАБАТЫВАЕТ ПОВТОР (НАЖАТО "=" ПОДРЯД)
-                    else {
-                        topField = new StringBuilder(bottomField)
-                                .append(currentOperation)
-                                .append(secondNumber)
-                                .append(lastPressedButton);
-                    }
-                    // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                    firstNumber = firstNumber.add(secondNumber).stripTrailingZeros();
-                    outOfBoundsCheck(firstNumber);
-                    // ВЫВОДИМ РЕЗУЛЬТАТ В НИЖНЕЕ ПОЛЕ
-                    if (!errorStatus) {
-                        bottomField = new StringBuilder(firstNumber.toPlainString());
-                        // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
-                        stripTrailingDigitsAfterDotForBottomField();
-                    }
-                }
+                    actionsOnClickResultSum();
+                    actionsOnClickResultCommonFinal();
 
-                // ВЫЧИТАНИЕ
-                if (currentOperation == '-') {
-                    // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА БЫЛ НАЧАТ ВВОД ВТОРОГО ЧИСЛА
-                    if (digitInputOnGoing) {
-                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                        topField.append(bottomField).append(lastPressedButton);
-                        secondNumber = new BigDecimal(String.valueOf(bottomField));
-                    }
-                    // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА ОТРАБАТЫВАЕТ ПОВТОР (НАЖАТО "=" ПОДРЯД)
-                    else {
-                        topField = new StringBuilder(bottomField)
-                                .append(currentOperation)
-                                .append(secondNumber)
-                                .append(lastPressedButton);
-                    }
-                    // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                    firstNumber = firstNumber.subtract(secondNumber).stripTrailingZeros();
-                    outOfBoundsCheck(firstNumber);
-                    // ВЫВОДИМ РЕЗУЛЬТАТ В НИЖНЕЕ ПОЛЕ
-                    if (!errorStatus) {
-                        bottomField = new StringBuilder(firstNumber.toPlainString());
-                        // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
-                        stripTrailingDigitsAfterDotForBottomField();
-                    }
-                }
-
-                // ДЕЛЕНИЕ
-                if (currentOperation == '/') {
-                    // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА БЫЛ НАЧАТ ВВОД ВТОРОГО ЧИСЛА
-                    if (digitInputOnGoing) {
-                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                        topField.append(bottomField).append(lastPressedButton);
-                        secondNumber = new BigDecimal(String.valueOf(bottomField));
-                    }
-                    // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА ОТРАБАТЫВАЕТ ПОВТОР (НАЖАТО "=" ПОДРЯД)
-                    else {
-                        topField = new StringBuilder(bottomField)
-                                .append(currentOperation)
-                                .append(secondNumber)
-                                .append(lastPressedButton);
-                    }
-                    // ЗАЩИТА ОТ ДЕЛЕНИЯ НА НОЛЬ
-                    if (secondNumber.compareTo(new BigDecimal(0)) != 0) {
-                        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                        firstNumber = firstNumber.divide(secondNumber, 16, RoundingMode.HALF_UP)
-                                .stripTrailingZeros();
-                        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                        outOfBoundsCheck(firstNumber);
-                        // ВЫВОДИМ РЕЗУЛЬТАТ В НИЖНЕЕ ПОЛЕ
-                        if (!errorStatus) {
-                            bottomField = new StringBuilder(firstNumber.toPlainString());
-                            // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
-                            stripTrailingDigitsAfterDotForBottomField();
-                        }
-                    }
-                    // ЗАЩИТА ОТ ДЕЛЕНИЯ НА НОЛЬ - ВЫЗОВ РЕЖИМА ОШИБКИ
-                    if (secondNumber.compareTo(new BigDecimal(0)) == 0) {
-                        topField = new StringBuilder("Деление на ноль невозможно!");
-                        bottomField = new StringBuilder("ОШИБКА");
-                        errorStatus = true;
-                    }
-                }
-
-                // УМНОЖЕНИЕ
-                if (currentOperation == '*') {
-                    // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА БЫЛ НАЧАТ ВВОД ВТОРОГО ЧИСЛА
-                    if (digitInputOnGoing) {
-                        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
-                        topField.append(bottomField).append(lastPressedButton);
-                        secondNumber = new BigDecimal(String.valueOf(bottomField));
-                    }
-                    // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА ОТРАБАТЫВАЕТ ПОВТОР (НАЖАТО "=" ПОДРЯД)
-                    else {
-                        topField = new StringBuilder(bottomField)
-                                .append(currentOperation)
-                                .append(secondNumber)
-                                .append(lastPressedButton);
-                    }
-                    // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
-                    firstNumber = firstNumber.multiply(secondNumber).stripTrailingZeros();
-                    outOfBoundsCheck(firstNumber);
-                    // ВЫВОДИМ РЕЗУЛЬТАТ В НИЖНЕЕ ПОЛЕ
-                    if (!errorStatus) {
-                        bottomField = new StringBuilder(firstNumber.toPlainString());
-                        // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
-                        stripTrailingDigitsAfterDotForBottomField();
-                    }
+                } else if (currentOperation == '-') {
+                    actionsOnClickResultSubtraction();
+                    actionsOnClickResultCommonFinal();
+                } else if (currentOperation == '/') {
+                    actionsOnClickResultDivision();
+                    actionsOnClickResultCommonFinal();
+                } else if (currentOperation == '*') {
+                    actionsOnClickResultMultiplication();
+                    actionsOnClickResultCommonFinal();
                 }
             }
 
-            // ПОСЛЕ НАЖАТИЯ КНОПКИ ОПЕРАЦИЙ ОТКЛЮЧАЕМ РЕЖИМ ВВОДА ЧИСЛА
-            digitInputOnGoing = false;
-            digitInputOnGoingAfterDot = false;
-            bottomFiledDigitIsNegative = false;
+            // ОТРАБОТКА ФУНКЦИИ КВАДРАТНОГО КОРНЯ ПРИ НАЖАТИИ КНОПКИ "x²"
+        } else if (lastPressedButton == 's') {
+            System.out.println("ПОКА НЕ ДОПИСАНО!");
+        }
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static void actionsOnClickDigits() {
+        // ЕСЛИ ВВОД ЧИСЛА НЕ НАЧАТ И ТЕКУЩАЯ ЦИФРА - ПЕРВАЯ
+        if (!digitInputOnGoing) {
+            bottomField = new StringBuilder(" ");
             digitInputCount = 0;
+        }
+        // ЗАЩИТА ОТ ОШИБКИ ВВОДА ЛИШНЕГО НУЛЯ В НАЧАЛЕ (" 0" > "09" > " 0")
+        else if ((bottomField.charAt(1) == '0') & (bottomField.length() == 2)) {
+            bottomField = new StringBuilder(" ");
+            digitInputCount = 0;
+        }
+        // ВВОД ЦИФР С ЗАЩИТОЙ (МАКСИМУМ 16 ЦИФР)
+        if (digitInputCount < 16) {
+            bottomField.append(lastPressedButton);
+            digitInputOnGoing = true;
+            digitInputCount = digitInputCount + 1;
         }
     }
 
+    private static void actionsOnClickZero() {
+        // ЕСЛИ ВВОД ЧИСЛА НЕ НАЧАТ
+        if (!digitInputOnGoing) {
+            resetDefaultsCurrent();
+            // ЕСЛИ ВВОД ЧИСЛА НАЧАТ И ПРОДОЛЖАЕТСЯ (ОГРАНИЧЕНИЕ - 16 ЦИФР)
+        } else if (digitInputCount < 16) {
+            // ЗАЩИТА ОТ ОШИБКИ ВВОДА НУЛЯ В НАЧАЛЕ (" 0" > "00" > " 0")
+            if ((bottomField.length() == 2) & (bottomField.charAt(1) == '0')) {
+                digitInputOnGoing = true;
+                // ВВОД НУЛЯ В НАЧАЛЕ (" 1" > " 10")                          // НУЖНА ОПТИМИЗАЦИЯ!
+            } else if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
+                bottomField.append("0");
+                digitInputOnGoing = true;
+                digitInputCount = digitInputCount + 1;
+                // ВВОД НУЛЯ В ЛЮБОМ ДРУГОМ МЕСТЕ ("-999" > "-9990")
+            } else if (bottomField.length() > 2) {
+                bottomField.append("0");
+                digitInputOnGoing = true;
+                digitInputCount = digitInputCount + 1;
+            }
+        }
+    }
+
+    private static void actionsOnClickDot() {
+        if (!digitInputOnGoingAfterDot) {
+            bottomField.append(".");
+            digitInputOnGoing = true;
+            digitInputOnGoingAfterDot = true;
+        }
+    }
+
+    private static void actionsOnClickBackspace() {
+        if (digitInputOnGoing) {
+            int currentBottomFieldLength = bottomField.length();
+            if (currentBottomFieldLength == 2) {
+                resetDefaultsCurrent();
+            } else if ((currentBottomFieldLength == 4) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
+                resetDefaultsCurrent();
+            } else if ((currentBottomFieldLength == 3) & (bottomField.charAt(1) == '0') & digitInputOnGoingAfterDot) {
+                resetDefaultsCurrent();
+            } else if (bottomField.charAt(currentBottomFieldLength - 1) == '.') {
+                bottomField.setLength(currentBottomFieldLength - 1);
+                digitInputOnGoingAfterDot = false;
+            } else {
+                bottomField.setLength(currentBottomFieldLength - 1);
+                digitInputCount = digitInputCount - 1;
+            }
+        }
+    }
+
+    private static void actionsOnClickSignChangeButton() {
+        if ((bottomField.length() == 2) & (bottomField.charAt(1) != '0')) {
+            if (!bottomFiledDigitIsNegative) {
+                bottomField.setCharAt(0, '-');
+                bottomFiledDigitIsNegative = true;
+            } else {
+                bottomField.setCharAt(0, ' ');
+                bottomFiledDigitIsNegative = false;
+            }
+        } else if (bottomField.length() >= 3) {
+            if (!bottomFiledDigitIsNegative) {
+                bottomField.setCharAt(0, '-');
+                bottomFiledDigitIsNegative = true;
+            } else {
+                bottomField.setCharAt(0, ' ');
+                bottomFiledDigitIsNegative = false;
+            }
+        }
+    }
+
+    private static void actionsOnClickSumSubDivMulCommon() {
+        // ВЫБОР ОПЕРАТОРА ПОСЛЕ ВВОДА ПЕРВОГО ЧИСЛА
+        if (currentOperation == 'n') {
+            // ОБНОВЛЯЕМ ЗНАЧЕНИЕ ВЕРХНЕГО ПОЛЯ ПЕРВЫМ ВВЕДЕННЫМ ЧИСЛОМ С ПРОВЕРКОЙ КОРРЕКТНОСТИ ВВОДА
+            // (НАПРИМЕР "0.450000" > "0.45")
+            topField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+            // ФИКСИРУЕМ ПЕРВОЕ ЧИСЛО В ПАМЯТЬ ("0" > "45")
+            firstNumber = new BigDecimal(String.valueOf(topField));
+            // В НИЖНЕЕ ПОЛЕ ДУБЛИРУЕМ ЗНАЧЕНИЕ ВЕРХНЕГО
+            // (ДЛЯ АВТОВВОДА ПРИ ПОСЛЕДУЮЩЕМ НАЖАТИИ "=" БЕЗ ВВОДА ВТОРОГО ЧИСЛА ДЛЯ ОПЕРАЦИИ ЧИСЛА С САМИМ СОБОЙ)
+            bottomField = new StringBuilder(topField);
+            // ТО ЖЕ САМОЕ ДЕЛАЕМ ДЛЯ ЧИСЕЛ
+            secondNumber = firstNumber;
+            // ОБНОВЛЯЕМ ЗНАЧЕНИЕ ВЕРХНЕГО ПОЛЯ ВВЕДЕННЫМ ОПЕРАНДОМ (НАПРИМЕР "0.45" > "0.45+")
+            topField.append(lastPressedButton);
+        }
+        // ИЗМЕНЕНИЕ УЖЕ ВЫБРАННОГО ОПЕРАТОРА ДО ВВОДА ВТОРОГО ЧИСЛА
+        if ((currentOperation != 'n') & (!digitInputOnGoing)) {
+            topField = new StringBuilder(bottomField).append(lastPressedButton);
+        }
+    }
+
+    private static void actionsOnClickSumSpecific() {
+        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+        secondNumber = new BigDecimal(String.valueOf(bottomField));
+        firstNumber = firstNumber.add(secondNumber).stripTrailingZeros();
+        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
+        outOfBoundsCheck(firstNumber);
+        if (!errorStatus) {
+            secondNumber = firstNumber;
+            bottomField = new StringBuilder(secondNumber.toPlainString());
+            // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
+            stripTrailingDigitsAfterDotForBottomField();
+            topField = new StringBuilder(secondNumber.toPlainString()).append(lastPressedButton);
+        }
+    }
+
+    private static void actionsOnClickSubtractionSpecific() {
+        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+        secondNumber = new BigDecimal(String.valueOf(bottomField));
+        firstNumber = firstNumber.subtract(secondNumber).stripTrailingZeros();
+        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
+        outOfBoundsCheck(firstNumber);
+        if (!errorStatus) {
+            secondNumber = firstNumber;
+            bottomField = new StringBuilder(secondNumber.toPlainString());
+            // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
+            stripTrailingDigitsAfterDotForBottomField();
+            topField = new StringBuilder(secondNumber.toPlainString()).append(lastPressedButton);
+        }
+    }
+
+    private static void actionsOnClickDivisionSpecific() {
+        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+        secondNumber = new BigDecimal(String.valueOf(bottomField));
+        // ЗАЩИТА ОТ ДЕЛЕНИЯ НА НОЛЬ - С ВЫЗОВОМ ОШИБКИ
+        if (secondNumber.compareTo(new BigDecimal(0)) == 0) {
+            actionOnDivisionByZero();
+        } else {
+            // ДЕЛИМ И СРЕЗАЕМ ХВОСТ ЗА 16 ЗНАКОМ ПОСЛЕ ТОЧКИ, А ТАКЖЕ ХВОСТ НУЛЕЙ
+            firstNumber = firstNumber.divide(secondNumber, 16, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
+            // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
+            outOfBoundsCheck(firstNumber);
+            if (!errorStatus) {
+                secondNumber = firstNumber;
+                bottomField = new StringBuilder(secondNumber.toPlainString());
+                // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
+                stripTrailingDigitsAfterDotForBottomField();
+                topField = new StringBuilder(secondNumber.toPlainString()).append(lastPressedButton);
+            }
+        }
+    }
+
+    private static void actionsOnClickMultiplicationSpecific() {
+        bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+        secondNumber = new BigDecimal(String.valueOf(bottomField));
+        firstNumber = firstNumber.multiply(secondNumber).stripTrailingZeros();
+        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
+        outOfBoundsCheck(firstNumber);
+        if (!errorStatus) {
+            secondNumber = firstNumber;
+            bottomField = new StringBuilder(secondNumber.toPlainString());
+            // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
+            stripTrailingDigitsAfterDotForBottomField();
+            topField = new StringBuilder(secondNumber.toPlainString()).append(lastPressedButton);
+        }
+    }
+
+    private static void actionsOnClickSumSubDivMulCommonFinal() {
+        digitInputOnGoing = false;
+        digitInputOnGoingAfterDot = false;
+        bottomFiledDigitIsNegative = false;
+        digitInputCount = 0;
+        currentOperation = lastPressedButton;
+    }
+
+    private static void actionsOnClickResultCommon() {
+        // ПРИ НАЖАТИИ "=" ДО НАЖАТИЯ ОПЕРАТОРА (ПРИ ВВЕДЕННОМ ПЕРВОМ ЧИСЛЕ ЛИБО СО ЗНАЧЕНИЕМ "0")
+        if (currentOperation == 'n') {
+            // ОБНОВЛЯЕМ ЗНАЧЕНИЕ ВЕРХНЕГО ПОЛЯ ПЕРВЫМ ВВЕДЕННЫМ ЧИСЛОМ С ПРОВЕРКОЙ КОРРЕКТНОСТИ ВВОДА
+            // (НАПРИМЕР "0.450000" > "0.45")
+            topField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+            // ФИКСИРУЕМ ПЕРВОЕ ЧИСЛО В ПАМЯТЬ ("0" > "45")
+            firstNumber = new BigDecimal(String.valueOf(topField));
+            // В НИЖНЕЕ ПОЛЕ ДУБЛИРУЕМ ЗНАЧЕНИЕ ВЕРХНЕГО
+            // (ДЛЯ АВТОВВОДА ПРИ ПОСЛЕДУЮЩЕМ НАЖАТИИ "=" БЕЗ ВВОДА ВТОРОГО ЧИСЛА ДЛЯ ОПЕРАЦИИ ЧИСЛА С САМИМ СОБОЙ)
+            bottomField = new StringBuilder(topField);
+            // ТО ЖЕ САМОЕ ДЕЛАЕМ ДЛЯ ЧИСЕЛ
+            secondNumber = firstNumber;
+            // ОБНОВЛЯЕМ ЗНАЧЕНИЕ ВЕРХНЕГО ПОЛЯ ВВЕДЕННЫМ ОПЕРАНДОМ (НАПРИМЕР "0.45" > "0.45+")
+            topField.append(lastPressedButton);
+        }
+    }
+
+    private static void actionsOnClickResultSum() {
+        // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА БЫЛ НАЧАТ ВВОД ВТОРОГО ЧИСЛА
+        if (digitInputOnGoing) {
+            bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+            topField.append(bottomField).append(lastPressedButton);
+            secondNumber = new BigDecimal(String.valueOf(bottomField));
+        }
+        // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА ОТРАБАТЫВАЕТ ПОВТОР (НАЖАТО "=" ПОДРЯД)
+        else {
+            topField = new StringBuilder(bottomField)
+                    .append(currentOperation)
+                    .append(secondNumber)
+                    .append(lastPressedButton);
+        }
+        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
+        firstNumber = firstNumber.add(secondNumber).stripTrailingZeros();
+        outOfBoundsCheck(firstNumber);
+        // ВЫВОДИМ РЕЗУЛЬТАТ В НИЖНЕЕ ПОЛЕ
+        if (!errorStatus) {
+            bottomField = new StringBuilder(firstNumber.toPlainString());
+            // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
+            stripTrailingDigitsAfterDotForBottomField();
+        }
+    }
+
+    private static void actionsOnClickResultSubtraction() {
+        // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА БЫЛ НАЧАТ ВВОД ВТОРОГО ЧИСЛА
+        if (digitInputOnGoing) {
+            bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+            topField.append(bottomField).append(lastPressedButton);
+            secondNumber = new BigDecimal(String.valueOf(bottomField));
+        }
+        // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА ОТРАБАТЫВАЕТ ПОВТОР (НАЖАТО "=" ПОДРЯД)
+        else {
+            topField = new StringBuilder(bottomField)
+                    .append(currentOperation)
+                    .append(secondNumber)
+                    .append(lastPressedButton);
+        }
+        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
+        firstNumber = firstNumber.subtract(secondNumber).stripTrailingZeros();
+        outOfBoundsCheck(firstNumber);
+        // ВЫВОДИМ РЕЗУЛЬТАТ В НИЖНЕЕ ПОЛЕ
+        if (!errorStatus) {
+            bottomField = new StringBuilder(firstNumber.toPlainString());
+            // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
+            stripTrailingDigitsAfterDotForBottomField();
+        }
+    }
+
+    private static void actionsOnClickResultDivision() {
+        // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА БЫЛ НАЧАТ ВВОД ВТОРОГО ЧИСЛА
+        if (digitInputOnGoing) {
+            bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+            topField.append(bottomField).append(lastPressedButton);
+            secondNumber = new BigDecimal(String.valueOf(bottomField));
+        }
+        // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА ОТРАБАТЫВАЕТ ПОВТОР (НАЖАТО "=" ПОДРЯД)
+        else {
+            topField = new StringBuilder(bottomField)
+                    .append(currentOperation)
+                    .append(secondNumber)
+                    .append(lastPressedButton);
+        }
+        // ЗАЩИТА ОТ ДЕЛЕНИЯ НА НОЛЬ - ВЫЗОВ РЕЖИМА ОШИБКИ
+        if (secondNumber.compareTo(new BigDecimal(0)) == 0) {
+            actionOnDivisionByZero();
+        } else {
+            // ДЕЛИМ И СРЕЗАЕМ ХВОСТ ЗА 16 ЗНАКОМ ПОСЛЕ ТОЧКИ, А ТАКЖЕ ХВОСТ НУЛЕЙ
+            firstNumber = firstNumber.divide(secondNumber, 16, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
+            // ПРОВЕРЯЕМ РЕЗУЛЬТАТ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
+            outOfBoundsCheck(firstNumber);
+            // ВЫВОДИМ РЕЗУЛЬТАТ В НИЖНЕЕ ПОЛЕ
+            if (!errorStatus) {
+                bottomField = new StringBuilder(firstNumber.toPlainString());
+                // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
+                stripTrailingDigitsAfterDotForBottomField();
+            }
+        }
+    }
+
+    private static void actionsOnClickResultMultiplication() {
+        // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА БЫЛ НАЧАТ ВВОД ВТОРОГО ЧИСЛА
+        if (digitInputOnGoing) {
+            bottomField = new StringBuilder(cleanInputBeforeOperation(bottomField));
+            topField.append(bottomField).append(lastPressedButton);
+            secondNumber = new BigDecimal(String.valueOf(bottomField));
+        }
+        // ОТРИСОВЫВАЕМ ВЕРХНЕЕ ПОЛЕ: ВАРИАНТ, КОГДА ОТРАБАТЫВАЕТ ПОВТОР (НАЖАТО "=" ПОДРЯД)
+        else {
+            topField = new StringBuilder(bottomField)
+                    .append(currentOperation)
+                    .append(secondNumber)
+                    .append(lastPressedButton);
+        }
+        // ПРОВЕРЯЕМ НА ВЫХОД ЗА ПРЕДЕЛЫ СЧЕТА (10^16)
+        firstNumber = firstNumber.multiply(secondNumber).stripTrailingZeros();
+        outOfBoundsCheck(firstNumber);
+        // ВЫВОДИМ РЕЗУЛЬТАТ В НИЖНЕЕ ПОЛЕ
+        if (!errorStatus) {
+            bottomField = new StringBuilder(firstNumber.toPlainString());
+            // ОБРЕЗАЕМ ВЫВОДИМЫЙ РЕЗУЛЬТАТ ДО 16 ЗНАКОВ (10^16)
+            stripTrailingDigitsAfterDotForBottomField();
+        }
+    }
+
+    private static void actionsOnClickResultCommonFinal() {
+        // ПОСЛЕ НАЖАТИЯ КНОПКИ ОПЕРАЦИЙ ОТКЛЮЧАЕМ РЕЖИМ ВВОДА ЧИСЛА
+        digitInputOnGoing = false;
+        digitInputOnGoingAfterDot = false;
+        bottomFiledDigitIsNegative = false;
+        digitInputCount = 0;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
     // МЕТОД: РАСПОЗНАЕМ ВВЕДЕННЫЕ ЗНАЧЕНИЯ
     private static char receivedRequestProcessing(String input) {
         switch (input) {
@@ -545,6 +573,13 @@ public class CalculatorCore {
             bottomField = new StringBuilder("9.999999999999999Е");
             errorStatus = true;
         }
+    }
+
+    // ВЫЗОВ И ОБРАБОТКА ОШИБКИ ПРИ ДЕЛЕНИИ НА НОЛЬ
+    private static void actionOnDivisionByZero() {
+        topField = new StringBuilder("Деление на ноль невозможно!");
+        bottomField = new StringBuilder("ОШИБКА");
+        errorStatus = true;
     }
 
     // СРЕЗАНИЕ ЛИШНИХ ЦИФР ПОСЛЕ АРИФМЕТИЧЕСКИХ ОПЕРАЦИЙ. ВСЕ РАБОТАЕТ >>>> РУКАМИ НЕ ТРОГАТЬ!
