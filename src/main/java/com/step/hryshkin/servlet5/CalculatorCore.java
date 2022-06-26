@@ -36,6 +36,20 @@ public class CalculatorCore {
         digitInputCount = 1;
     }
 
+    private static void resetDefaultsWhenStartingNewOperation() {
+        calculatorFirstLaunchedMode = true;
+        errorStatusMode = false;
+        digitInputOnGoingMode = true;
+        digitInputOnGoingAfterDotMode = false;
+        bottomFiledDigitIsNegativeMode = false;
+        topFieldDisplayed = new StringBuilder();
+        bottomFieldDisplayed = new StringBuilder(" 0");
+        firstNumber = BigDecimal.valueOf(0);
+        secondNumber = BigDecimal.valueOf(0);
+        currentOperation = 'n';
+        digitInputCount = 1;
+    }
+
     private static void resetDefaultsCurrent() {
         bottomFieldDisplayed = new StringBuilder(" 0");
         bottomFiledDigitIsNegativeMode = false;
@@ -93,80 +107,94 @@ public class CalculatorCore {
 
     // МЕТОД: ОБРАБОТКА НАЖАТИЯ КНОПОК И ВЫЧИСЛЕНИЯ
     private static void actionsAndCalculations() {
-        if ((lastPressedButton == '1') | (lastPressedButton == '2') | (lastPressedButton == '3') |
-                (lastPressedButton == '4') | (lastPressedButton == '5') | (lastPressedButton == '6') |
-                (lastPressedButton == '7') | (lastPressedButton == '8') | (lastPressedButton == '9')) {
-            actionsOnClickDigits();
-
-        } else if (lastPressedButton == '0') {
-            actionsOnClickZero();
-
-        } else if (lastPressedButton == '.') {
-            actionsOnClickDot();
-
-        } else if (lastPressedButton == 'b') {
-            actionsOnClickBackspace();
-
-        } else if (lastPressedButton == 'e') {
-            resetDefaultsCurrent();
-
-        } else if (lastPressedButton == 'c') {
-            resetDefaultsAll();
-
-        } else if (lastPressedButton == '&') {
-            if (digitInputOnGoingMode) actionsOnClickSignChangeButton();
-
-        } else if (lastPressedButton == '+') {
-            actionsOnClickSumSubDivMulCommon();
-            if ((currentOperation != 'n') & (digitInputOnGoingMode)) actionsOnClickSumSpecific();
-            actionsOnClickSumSubDivMulCommonFinal();
-
-        } else if (lastPressedButton == '-') {
-            actionsOnClickSumSubDivMulCommon();
-            if ((currentOperation != 'n') & (digitInputOnGoingMode)) actionsOnClickSubtractionSpecific();
-            actionsOnClickSumSubDivMulCommonFinal();
-
-        } else if (lastPressedButton == '/') {
-            actionsOnClickSumSubDivMulCommon();
-            if ((currentOperation != 'n') & (digitInputOnGoingMode)) actionsOnClickDivisionSpecific();
-            actionsOnClickSumSubDivMulCommonFinal();
-
-        } else if (lastPressedButton == '*') {
-            actionsOnClickSumSubDivMulCommon();
-            if ((currentOperation != 'n') & (digitInputOnGoingMode)) actionsOnClickMultiplicationSpecific();
-            actionsOnClickSumSubDivMulCommonFinal();
-
-            // ВЫПОЛНЕНИЕ ОПЕРАЦИЙ ПРИ НАЖАТИИ КНОПКИ "="
-        } else if (lastPressedButton == '=') {
-            actionsOnClickResultCommon();
-            // ВЫПОЛНЕНИЕ АРИФМЕТИЧЕСКИХ ОПЕРАЦИЙ ПОСЛЕ ВЫБОРА ОПЕРАТОРА
-            if (currentOperation != 'n') {
-                if (currentOperation == '+') {
-                    actionsOnClickResultSum();
-                    actionsOnClickResultCommonFinal();
-
-                } else if (currentOperation == '-') {
-                    actionsOnClickResultSubtraction();
-                    actionsOnClickResultCommonFinal();
-                } else if (currentOperation == '/') {
-                    actionsOnClickResultDivision();
-                    actionsOnClickResultCommonFinal();
-                } else if (currentOperation == '*') {
-                    actionsOnClickResultMultiplication();
-                    actionsOnClickResultCommonFinal();
+        switch (lastPressedButton) {
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                actionsOnClickDigits();
+                break;
+            case '0':
+                actionsOnClickZero();
+                break;
+            case '.':
+                actionsOnClickDot();
+                break;
+            case 'b':
+                actionsOnClickBackspace();
+                break;
+            case 'e':
+                resetDefaultsCurrent();
+                break;
+            case 'c':
+                resetDefaultsAll();
+                break;
+            case '&':
+                if (digitInputOnGoingMode) actionsOnClickSignChangeButton();
+                break;
+            case '+':
+                actionsOnClickSumSubDivMulCommon();
+                if ((currentOperation != 'n') & (digitInputOnGoingMode)) actionsOnClickSumSpecific();
+                actionsOnClickSumSubDivMulCommonFinal();
+                break;
+            case '-':
+                actionsOnClickSumSubDivMulCommon();
+                if ((currentOperation != 'n') & (digitInputOnGoingMode)) actionsOnClickSubtractionSpecific();
+                actionsOnClickSumSubDivMulCommonFinal();
+                break;
+            case '/':
+                actionsOnClickSumSubDivMulCommon();
+                if ((currentOperation != 'n') & (digitInputOnGoingMode)) actionsOnClickDivisionSpecific();
+                actionsOnClickSumSubDivMulCommonFinal();
+                break;
+            case '*':
+                actionsOnClickSumSubDivMulCommon();
+                if ((currentOperation != 'n') & (digitInputOnGoingMode)) actionsOnClickMultiplicationSpecific();
+                actionsOnClickSumSubDivMulCommonFinal();
+                break;
+            case '=':
+                actionsOnClickResultCommon();
+                // ВЫПОЛНЕНИЕ АРИФМЕТИЧЕСКИХ ОПЕРАЦИЙ ПОСЛЕ ВЫБОРА ОПЕРАТОРА
+                if (currentOperation != 'n') {
+                    switch (currentOperation) {
+                        case '+':
+                            actionsOnClickResultSum();
+                            actionsOnClickResultCommonFinal();
+                            break;
+                        case '-':
+                            actionsOnClickResultSubtraction();
+                            actionsOnClickResultCommonFinal();
+                            break;
+                        case '/':
+                            actionsOnClickResultDivision();
+                            actionsOnClickResultCommonFinal();
+                            break;
+                        case '*':
+                            actionsOnClickResultMultiplication();
+                            actionsOnClickResultCommonFinal();
+                            break;
+                    }
                 }
-            }
-
+                break;
             // ОТРАБОТКА ФУНКЦИИ КВАДРАТНОГО КОРНЯ ПРИ НАЖАТИИ КНОПКИ "x²"
-        } else if (lastPressedButton == 's') {
-            System.out.println("ПОКА НЕ ДОПИСАНО!");
+            case 's':
+                System.out.println("ПОКА НЕ ДОПИСАНО!");
+                break;
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
 
     private static void actionsOnClickDigits() {
+        // ПРОВЕРКА НАЧАЛА НОВОЙ ОПЕРАЦИИ ПОСЛЕ ЗАВЕРШЕНИЯ ПРЕДЫДУЩЕГО ВЫЧИСЛЕНИЯ
+        if ((topFieldDisplayed.length() != 0) && (topFieldDisplayed.charAt(topFieldDisplayed.length() - 1) == '=')) {
+            resetDefaultsWhenStartingNewOperation();
+        }
+
         // ЕСЛИ ВВОД ЧИСЛА НЕ НАЧАТ И ТЕКУЩАЯ ЦИФРА - ПЕРВАЯ
         if (!digitInputOnGoingMode) {
             bottomFieldDisplayed = new StringBuilder(" ");
@@ -486,8 +514,7 @@ public class CalculatorCore {
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
+
     // МЕТОД: РАСПОЗНАЕМ ВВЕДЕННЫЕ ЗНАЧЕНИЯ
     private static char receivedRequestProcessing(String input) {
         switch (input) {
