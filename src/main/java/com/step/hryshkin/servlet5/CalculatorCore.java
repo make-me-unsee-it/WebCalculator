@@ -617,13 +617,13 @@ public class CalculatorCore {
 
     // РЕЖИМ ОТЛАДКИ
     private static String debugReportPrint() {
-        return "<p class=\"debug\"><br> calculatorFirstLaunched: " + calculatorFirstLaunchedMode +
-                "<br> errorStatus: " + errorStatusMode +
-                "<br> digitInputOnGoing: " + digitInputOnGoingMode +
-                "<br> digitInputOnGoingAfterDot: " + digitInputOnGoingAfterDotMode +
-                "<br> bottomFiledDigitIsNegative: " + bottomFiledDigitIsNegativeMode +
-                "<br> topField: \"" + topFieldDisplayed + "\"" +
-                "<br> bottomField: \"" + bottomFieldDisplayed + "\"" +
+        return "<p class=\"debug\"><br> calculatorFirstLaunchedMode: " + calculatorFirstLaunchedMode +
+                "<br> errorStatusMode: " + errorStatusMode +
+                "<br> digitInputOnGoingMode: " + digitInputOnGoingMode +
+                "<br> digitInputOnGoingAfterDotMode: " + digitInputOnGoingAfterDotMode +
+                "<br> bottomFiledDigitIsNegativeMode: " + bottomFiledDigitIsNegativeMode +
+                "<br> topFieldDisplayed: \"" + topFieldDisplayed + "\"" +
+                "<br> bottomFieldDisplayed: \"" + bottomFieldDisplayed + "\"" +
                 "<br> firstNumber: \"" + firstNumber + "\"" +
                 "<br> secondNumber: \"" + secondNumber + "\"" +
                 "<br> currentOperation: \"" + currentOperation + "\"" +
