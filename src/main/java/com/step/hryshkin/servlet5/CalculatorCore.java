@@ -148,7 +148,10 @@ public class CalculatorCore {
                 actionsOnClickRoot();
                 actionsOnClickResultCommonFinal();
                 break;
-
+            case '%':
+                actionsOnClickPercentage();
+                actionsOnClickResultCommonFinal();
+                break;
             case '=':
                 actionsOnClickResultCommon();
                 if (currentOperation != 'n') {
@@ -188,7 +191,7 @@ public class CalculatorCore {
             }
         }
 
-        if ((topFieldDisplayed.length() != 0) && (topFieldDisplayed.toString().contains("√"))){
+        if ((topFieldDisplayed.length() != 0) && (topFieldDisplayed.toString().contains("√"))) {
             if (currentOperation == 'n') {
                 topFieldDisplayed = new StringBuilder();
             } else {
@@ -200,8 +203,7 @@ public class CalculatorCore {
         if (!digitInputOnGoingMode) {
             bottomFieldDisplayed = new StringBuilder(" ");
             digitInputCount = 0;
-        }
-        else if ((bottomFieldDisplayed.charAt(1) == '0') & (bottomFieldDisplayed.length() == 2)) {
+        } else if ((bottomFieldDisplayed.charAt(1) == '0') & (bottomFieldDisplayed.length() == 2)) {
             bottomFieldDisplayed = new StringBuilder(" ");
             digitInputCount = 0;
         }
@@ -422,6 +424,38 @@ public class CalculatorCore {
         }
     }
 
+    private static void actionsOnClickPercentage() {
+        if (currentOperation == '/') {
+            bottomFieldDisplayed = new StringBuilder(cleanInputBeforeOperation(bottomFieldDisplayed));
+            secondNumber = new BigDecimal(String.valueOf(bottomFieldDisplayed));
+            if (secondNumber.compareTo(new BigDecimal(0)) == 0) {
+                actionOnDivisionByZero();
+            } else {
+                firstNumber = firstNumber.divide(secondNumber, 16, RoundingMode.HALF_UP)
+                        .multiply(new BigDecimal("100"))
+                        .stripTrailingZeros();
+                outOfBoundsCheck(firstNumber);
+                if (!errorStatusMode) {
+                    bottomFieldDisplayed = new StringBuilder(firstNumber.toPlainString());
+                    stripTrailingDigitsAfterDotForBottomField();
+                    topFieldDisplayed.append(secondNumber.toPlainString()).append("%");
+
+                    calculatorFirstLaunchedMode = true;
+                    digitInputOnGoingMode = true;
+                    digitInputOnGoingAfterDotMode = false;
+                    bottomFiledDigitIsNegativeMode = false;
+                    firstNumber = BigDecimal.valueOf(0);
+                    secondNumber = BigDecimal.valueOf(0);
+                    currentOperation = 'n';
+                    lastPressedButton = '\u0000';
+                    digitInputCount = 1;
+                }
+            }
+        } else {
+            resetDefaultsAll();
+        }
+    }
+
     private static void actionsOnClickSumSubDivMulCommonFinal() {
         digitInputOnGoingMode = false;
         digitInputOnGoingAfterDotMode = false;
@@ -445,8 +479,7 @@ public class CalculatorCore {
             bottomFieldDisplayed = new StringBuilder(cleanInputBeforeOperation(bottomFieldDisplayed));
             topFieldDisplayed.append(bottomFieldDisplayed).append(lastPressedButton);
             secondNumber = new BigDecimal(String.valueOf(bottomFieldDisplayed));
-        }
-        else {
+        } else {
             topFieldDisplayed = new StringBuilder(firstNumber.toPlainString())
                     .append(currentOperation)
                     .append(secondNumber.toPlainString())
@@ -465,8 +498,7 @@ public class CalculatorCore {
             bottomFieldDisplayed = new StringBuilder(cleanInputBeforeOperation(bottomFieldDisplayed));
             topFieldDisplayed.append(bottomFieldDisplayed).append(lastPressedButton);
             secondNumber = new BigDecimal(String.valueOf(bottomFieldDisplayed));
-        }
-        else {
+        } else {
             topFieldDisplayed = new StringBuilder(bottomFieldDisplayed)
                     .append(currentOperation)
                     .append(secondNumber)
@@ -485,8 +517,7 @@ public class CalculatorCore {
             bottomFieldDisplayed = new StringBuilder(cleanInputBeforeOperation(bottomFieldDisplayed));
             topFieldDisplayed.append(bottomFieldDisplayed).append(lastPressedButton);
             secondNumber = new BigDecimal(String.valueOf(bottomFieldDisplayed));
-        }
-        else {
+        } else {
             topFieldDisplayed = new StringBuilder(bottomFieldDisplayed)
                     .append(currentOperation)
                     .append(secondNumber)
@@ -510,8 +541,7 @@ public class CalculatorCore {
             bottomFieldDisplayed = new StringBuilder(cleanInputBeforeOperation(bottomFieldDisplayed));
             topFieldDisplayed.append(bottomFieldDisplayed).append(lastPressedButton);
             secondNumber = new BigDecimal(String.valueOf(bottomFieldDisplayed));
-        }
-        else {
+        } else {
             topFieldDisplayed = new StringBuilder(bottomFieldDisplayed)
                     .append(currentOperation)
                     .append(secondNumber)
